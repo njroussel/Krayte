@@ -17,14 +17,26 @@
 // Define a 16-bit/real-mode function.
 // @param name: The name of the function.
 #define ASM_FUNC_DEF16(name)    ;\
+    .section .text              ;\
     .code16                     ;\
     .global name                ;\
     .type name, @function       ;\
     name
 
+// Define a 16-bit/real-mode function. This is the same as ASM_FUNC_DEF16 except
+// that this macro will not set the current to section to .text and will keep
+// the section of the call-site.
+// @param name: The name of the function.
+#define ASM_FUNC_DEF16_NO_SECTION(name)     ;\
+    .code16                                 ;\
+    .global name                            ;\
+    .type name, @function                   ;\
+    name
+
 // Define a 16-bit/real-mode function.
 // @param name: The name of the function.
 #define ASM_FUNC_DEF32(name)    ;\
+    .section .text              ;\
     .code32                     ;\
     .global name                ;\
     .type name, @function       ;\

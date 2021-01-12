@@ -1,3 +1,9 @@
+// This file contains various logging functions used by bootstrap code. For now
+// those functions are available for 16-bit mode only.
+
+#include <asm_macros.h>
+.intel_syntax   noprefix
+
 // Width of the VGA text buffer in number of characters.
 .set VGA_WIDTH, 80
 // Height of the VGA text buffer in number of characters.

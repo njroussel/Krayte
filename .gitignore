@@ -5,3 +5,4 @@ target/
 *.code-workspace
 
 *.img
+*.o
