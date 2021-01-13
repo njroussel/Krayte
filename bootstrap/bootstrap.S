@@ -34,9 +34,6 @@ ASM_FUNC_DEF16(second_sector_entry):
     // Unreachable.
     int3
 
-jmp_str:
-.asciz  "Jump to 32-bit PM @ %d\n"
-
 // ============================================================================= 
 // Enable 32-bit Protection Mode and jump to a 32-bit routine. This routine
 // DOES NOT RETURN.
@@ -57,13 +54,6 @@ ASM_FUNC_DEF16(jump_to_32_bit_protected_mode):
     push    cx
     lgdt    [esp]
     add     esp, 6
-
-    mov     edx, [esp + 0x2]
-    push    edx
-    lea     dx, [jmp_str]
-    push    dx
-    call    b_16_printf
-    add     sp, 6
 
     // Enable protected mode bit (PE) in cr0.
     mov     edx, cr0
@@ -196,6 +186,32 @@ ASM_FUNC_DEF32(bootstrap_main):
     jmp     0b
 
 
+// ============================================================================= 
+// Panic the bootstrap code, this will print a message indicating where the
+// PANIC occured (EIP) and lock up the cpu.
+// This function DOES NOT RETURN.
+// ============================================================================= 
+ASM_FUNC_DEF32(panic):
+    // For now logging functions are only available in 16-bit mode.
+    // Push EIP where the panic occured.
+    push    [esp]
+    // Push format string.
+    lea     ax, [str_panic_message]
+    sub     esp, 2
+    mov     WORD PTR [esp], ax
+    lea     eax, [b_16_printf]
+    push    eax
+    call    call_real_mode
+    add     esp, 10
+
+    // Lock up the cpu.
+0:
+    mov     eax, 0xDEADC0DE
+    cli
+    hlt
+    jmp     0b
+
+
 // Data used by the bootstrap code:
 .section    .data
 
@@ -224,3 +240,6 @@ str_boot_message:
 
 str_main_message:
 .asciz  "Bootstrap code main executed\n"
+
+str_panic_message:
+.asciz  "PANIC, IP = %d\n"
