@@ -146,7 +146,7 @@ ASM_FUNC_DEF32(call_bios_func_32):
     cmp     eax, ecx
     jbe     0f
     // Address is too big for 16-bits.
-    call    panic
+    PANIC32("BCP address not accessible from 16-bit code")
 0:
 
     movzx   eax, ax    

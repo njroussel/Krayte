@@ -166,7 +166,7 @@ ASM_FUNC_DEF32(bootstrap_main):
     add     esp, 4
 
     // This is where we would typically jump to the rust main function.
-    jmp     0f
+    PANIC32("Not yet implemented")
 0:
     cli
     hlt
@@ -177,14 +177,23 @@ ASM_FUNC_DEF32(bootstrap_main):
 // Panic the bootstrap code, this will print a message indicating where the
 // PANIC occured (EIP) and lock up the cpu.
 // This function DOES NOT RETURN.
+// @param (DWORD) message: Pointer on a string describing the error.
 // ============================================================================= 
 ASM_FUNC_DEF32(panic):
+    push    ebp
+    mov     ebp, esp
+
     // Push EIP where the panic occured.
-    push    [esp]
+    push    [ebp + 0x4]
     // Push format string.
     push    OFFSET FLAT : str_panic_message
     call    printf
     add     esp, 8 
+
+    // Print message
+    push    [ebp + 0x8]
+    call    printf
+    add     esp, 4
 
     // Lock up the cpu.
 0:
@@ -224,4 +233,4 @@ str_main_message:
 .asciz  "Bootstrap code main executed\n"
 
 str_panic_message:
-.asciz  "PANIC, IP = %d\n"
+.asciz  "PANIC @ IP = %d : "

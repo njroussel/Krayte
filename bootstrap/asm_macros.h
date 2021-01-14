@@ -41,3 +41,19 @@
     .global name                ;\
     .type name, @function       ;\
     name
+
+// Helper macros to panic the current code. This macros will define the message
+// in the .data section and call panic.
+// @param msg: A string indicating the nature of the panic.
+// Note: Since we need a new label for the message string, and it is not
+// possible to generate unique labels with AS, we use a numeric label with a
+// high number. This _almost_ guarantee that this will not conflict with any
+// label in the current code.
+#define PANIC32(msg)        ;\
+    .section .data          ;\
+    999999:                 ;\
+    .asciz msg              ;\
+    .section .text          ;\
+    lea     eax, [999999b]  ;\
+    push    eax             ;\
+    call    panic

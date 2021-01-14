@@ -289,7 +289,7 @@ ASM_FUNC_DEF32(printf):
     test    edx, edx
     // In case of invalid subst, panic.
     jnz      4f
-    call    panic
+    PANIC32("Invalid substitution character in printf")
 4:
    
     // EAX = address of the value = Address of first arg + <num args used> * 4.
