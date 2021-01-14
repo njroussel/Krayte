@@ -1,5 +1,4 @@
-// This file contains various logging functions used by bootstrap code. For now
-// those functions are available for 16-bit mode only.
+// This file contains various logging functions used by bootstrap code.
 
 #include <asm_macros.h>
 .intel_syntax   noprefix
@@ -8,18 +7,18 @@
 .set VGA_WIDTH, 80
 // Height of the VGA text buffer in number of characters.
 .set VGA_HEIGHT, 25
-// Segment to use to write into the VGA text buffer.
-.set VGA_SEGMENT, 0xB800
+// Address of the VGA buffer.
+.set VGA_BUFFER, 0xB8000
 
+// ============================================================================= 
 // Clear the VGA text buffer. This result in a black screen.
-ASM_FUNC_DEF16(b_16_clear_vga_buffer):
-    push    bp
-    mov     bp, sp
-    push    di
+// ============================================================================= 
+ASM_FUNC_DEF32(clear_vga_buffer):
+    push    ebp
+    mov     ebp, esp
+    push    edi
 
-    mov     ax, VGA_SEGMENT
-    mov     es, ax
-    xor     di, di
+    mov     edi, VGA_BUFFER
     mov     ecx, VGA_WIDTH * VGA_HEIGHT
     // Zero out the entire buffer.
     xor     ax, ax
@@ -27,28 +26,25 @@ ASM_FUNC_DEF16(b_16_clear_vga_buffer):
     rep     stosw
 
     // On a clear the cursor is reset to 0 == top left corner.
-    mov     WORD PTR [b_16_putc_vga_buffer_cursor], 0x0
+    mov     WORD PTR [putc_vga_buffer_cursor], 0x0
 
-    mov     es, ax
-    pop     di
-    pop     bp
+    pop     edi
+    leave
     ret
 
+// ============================================================================= 
 // Scroll the VGA text buffer up, and clear the bottom line.
-ASM_FUNC_DEF16(b_16_scroll_vga_buffer):
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+// ============================================================================= 
+ASM_FUNC_DEF32(scroll_vga_buffer):
+    push    ebp
+    mov     ebp, esp
+    push    esi
+    push    edi
     
-    mov     ax, VGA_SEGMENT
-    mov     es, ax
-    mov     ds, ax
-
     // Copy the content from line i+1 to line i for all lines except the bottom
     // one.
-    xor     di, di
-    mov     si, VGA_WIDTH * 2
+    mov     edi, VGA_BUFFER
+    mov     esi, VGA_WIDTH * 2
     mov     ecx, VGA_WIDTH * VGA_HEIGHT - VGA_WIDTH
     cld
     rep     movsw
@@ -59,27 +55,24 @@ ASM_FUNC_DEF16(b_16_scroll_vga_buffer):
     cld
     rep     stosw
 
-    mov     es, ax
-    mov     ds, ax
-
-    pop     di
-    pop     si
-    pop     bp
+    pop     edi
+    pop     esi
+    leave
     ret
 
-// Print a char in the VGA text buffer. This function will scroll the buffer if
-// needed.
-// @param char: The ASCII char to be printed.
-ASM_FUNC_DEF16(b_16_putc_vga_buffer):
-    push    bp
-    mov     bp, sp
-    push    bx
-
-    mov     ax, VGA_SEGMENT
-    mov     es, ax
+// ============================================================================= 
+// Print a char in the VGA text buffer at the current cursor position. This
+// function will scroll the buffer if needed.
+// @param (DWORD) char: The ASCII char to be printed. Only the bottom byte is
+// used.
+// ============================================================================= 
+ASM_FUNC_DEF32(putc_vga_buffer):
+    push    ebp
+    mov     ebp, esp
+    push    ebx
 
     // AL = char to write.
-    mov     al, [bp + ARG(0)] 
+    mov     al, [ebp + 0x8] 
 
     // 0x0A == '\n'.
     cmp     al, 0x0A
@@ -87,26 +80,26 @@ ASM_FUNC_DEF16(b_16_putc_vga_buffer):
 
     // Attribute = 0x7 == light grey char on black background.
     mov     ah, 0x7
-    mov     bx, [b_16_putc_vga_buffer_cursor]
+    mov     ebx, [putc_vga_buffer_cursor]
     // Convert cursor index to offset in the buffer (that is * sizeof(u16)).
-    shl     bx, 1
+    shl     ebx, 1
 
     // Write char.
-    mov     es:[bx], ax
-    shr     bx, 1
+    mov     [ebx + VGA_BUFFER], ax
+    shr     ebx, 1
 
     jmp     0f
 
 1:
     // This is a new-line char. Advance the cursor to the start of the next
     // line.
-    mov     ax, [b_16_putc_vga_buffer_cursor]
+    mov     ax, [putc_vga_buffer_cursor]
     mov     bx, VGA_WIDTH
     // AL = cursor / VGA_WIDTH, AH = cursor % VGA_WIDTH.
     div     bl
     
     sub     bl, ah
-    add     bx, [b_16_putc_vga_buffer_cursor]
+    add     bx, [putc_vga_buffer_cursor]
     // The cursor will be updated underneath. Fix up so the update puts the
     // cursor at the beginning of the line.
     dec     bx
@@ -115,67 +108,70 @@ ASM_FUNC_DEF16(b_16_putc_vga_buffer):
     // Advance cursor and check if it is now out of bounds. If it is then scroll
     // up the buffer.
     inc     bx
-    mov     [b_16_putc_vga_buffer_cursor], bx
+    mov     [putc_vga_buffer_cursor], bx
     cmp     bx, VGA_WIDTH * VGA_HEIGHT
     jb      0f
     
     // We reached the end of the VGA buffer, time to scroll up.
-    call    b_16_scroll_vga_buffer
+    call    scroll_vga_buffer
     // The cursor goes to the beginning of the last line.
-    mov     WORD PTR [b_16_putc_vga_buffer_cursor], VGA_WIDTH * (VGA_HEIGHT - 1)
+    mov     WORD PTR [putc_vga_buffer_cursor], VGA_WIDTH * (VGA_HEIGHT - 1)
     
 0:
-    xor     ax, ax
-    mov     es, ax
 
-    pop     bx
-    pop     bp
+    pop     ebx
+    leave
     ret
+
 // Cursor of the VGA text buffer. Indicate the index of the next char to be
 // printed.
-b_16_putc_vga_buffer_cursor:
-.word   0x0
+putc_vga_buffer_cursor:
+.long   0x0
 
-// Output an hexadecimal value into the VGA buffer.
-// @param size: The number of bytes of the value.
-// @param addr: Address where the value is stored.
-ASM_FUNC_DEF16(_b_16_printf_output_hex):
-    push    bp
-    mov     bp, sp
+// ============================================================================= 
+// Output an hexadecimal value into the VGA buffer at the current cursor
+// position.
+// @param (DWORD) size: The number of bytes of the value.
+// @param (DWORD) addr: Address where the value is stored.
+// ============================================================================= 
+ASM_FUNC_DEF32(_printf_output_hex):
+    push    ebp
+    mov     ebp, esp
 
-    push    bx
+    push    ebx
     
     // Put '0'.
     push    0x30
-    call    b_16_putc_vga_buffer
-    add     sp, 2
+    call    putc_vga_buffer
+    add     esp, 4
 
     // Put 'x'.
     push    0x78
-    call    b_16_putc_vga_buffer
-    add     sp, 2
+    call    putc_vga_buffer
+    add     esp, 4
 
     // Since x86 is little-endian, the byte following the "0x" will be the byte
     // at ths address `addr + size - 1`. Hence we will iterates over the bytes
     // of the value in reverse, that is MSB first and finish with LSB.
 
-    // BX = address of the MSByte of the value.
-    mov     bx, [bp + ARG(1)]
-    add     bx, [bp + ARG(0)]
-    dec     bx
+    // EBX = address of the MSByte of the value.
+    mov     ebx, [ebp + 0xC]
+    add     ebx, [ebp + 0x8]
+    dec     ebx
 
     jmp     1f
 // Loop head, iterate over all bytes.
 0:
     // AL = current byte.
-    mov     al, [bx]
+    mov     al, [ebx]
 
     // In order to output the correct representation of the byte, we need to do
     // some ASCII math on each half/4bits composing the byte.
-    // The goal here is to make two calls to b_16_putc_vga_buffer with the
-    // correct digit or letter.
+    // The goal here is to make two calls to putc_vga_buffer with the correct
+    // digit or letter.
     // The math is the same for each half, hence we have a small loop that will
     // execute twice, computing the digit/letter and pushing it onto the stack.
+    xor     edx, edx
     mov     cl, 2
 2:
     mov     dl, al
@@ -186,41 +182,43 @@ ASM_FUNC_DEF16(_b_16_printf_output_hex):
 
     // The byte is above or equal to 10, we need a letter.
     add     dl, 0x41 - 0xA
-    push    dx
+    push    edx
     jmp     4f
 
 3:
     // The byte is < 10, we need a digit.
     add     dl, 0x30
-    push    dx
+    push    edx
 
 4:
     shr     al, 4
     loop    2b
 
     // At this point the stack contains:
-    //  SP + 2 -> digit/letter of lower 4 bits of AL.
+    //  SP + 4 -> digit/letter of lower 4 bits of AL.
     //  SP     -> digit/letter of higher 4 bits of AL.
-    call    b_16_putc_vga_buffer
-    add     sp, 2
-    call    b_16_putc_vga_buffer
-    add     sp, 2
+    call    putc_vga_buffer
+    add     esp, 4
+    call    putc_vga_buffer
+    add     esp, 4
     
     // Move to previous byte.
-    dec     bx
+    dec     ebx
 
 // Loop condition, iterate over all bytes.
 1:
-    cmp     bx, WORD PTR [bp + ARG(1)]
+    cmp     ebx, [ebp + 0xC]
     jae     0b
 
-    pop     bx
-    pop     bp
+    pop     ebx
+    leave
     ret
 
+// ============================================================================= 
 // Print a formatted string and values.
-// @param format_string: A string that can contain substitution characters "%".
-// @param values...: A variadic list of values for the substitutions.
+// @param (DWORD) format_string: Address of a string that can contain
+// substitution characters "%".
+// @param (MIX) values...: A variadic list of values for the substitutions.
 // The following substitutions are available:
 //  - %b: Print an hexadecimal byte.
 //  - %w: Print an hexadecimal word (16 bits).
@@ -228,18 +226,21 @@ ASM_FUNC_DEF16(_b_16_printf_output_hex):
 //  - %q: Print an hexadecimal qword (64 bits).
 // For values that are bigger than 16 bits, the MSBs of the value should be
 // pushed onto the stack first, followed by the LSBs.
-ASM_FUNC_DEF16(b_16_printf):
-    push    bp
-    mov     bp, sp
+// The size of each value is at least a DWORD (hence for %b and %w one should
+// push an entire DWORD) or a QWORD for %q.
+// ============================================================================= 
+ASM_FUNC_DEF32(printf):
+    push    ebp
+    mov     ebp, esp
 
     // Local var:
-    //  BP - 2: Number of arguments from the variadic list used so far.
+    //  EBP - 4: Number of arguments from the variadic list used so far.
     push    0x0
 
-    push    bx
+    push    ebx
 
-    // BX = pointer on format string.
-    mov     bx, [bp + ARG(0)]
+    // EBX = pointer on format string.
+    mov     ebx, [ebp + 0x8]
     jmp     1f
 
 0:
@@ -250,78 +251,81 @@ ASM_FUNC_DEF16(b_16_printf):
     je      2f
 
     // Regular character, simply output it.
-    push    ax
-    call    b_16_putc_vga_buffer
-    add     sp, 2
+    push    eax
+    call    putc_vga_buffer
+    add     esp, 4
     jmp     3f
 
 2:
     // % char. Peek next char to know the type.
-    inc     bx
-    mov     cl, [bx]
+    inc     ebx
+    mov     cl, [ebx]
     test    cl, cl
     // If NUL char break out of the loop.
     jz      1f 
 
-    xor     dx, dx
+    xor     edx, edx
 
     // 'b' outputs a byte.
-    mov     ax, 1
+    mov     eax, 1
     cmp     cl, 0x62
-    cmove   dx, ax
+    cmove   edx, eax
 
     // 'w' outputs a word.
-    mov     ax, 2
+    mov     eax, 2
     cmp     cl, 0x77
-    cmove   dx, ax
+    cmove   edx, eax
 
     // 'd' outputs a dword.
-    mov     ax, 4
+    mov     eax, 4
     cmp     cl, 0x64
-    cmove   dx, ax
+    cmove   edx, eax
 
     // 'q' outputs a qword.
-    mov     ax, 8
+    mov     eax, 8
     cmp     cl, 0x71
-    cmove   dx, ax
+    cmove   edx, eax
 
-    test    dx, dx
-    // In case of invalid subst, ignore. TODO: Panic ?
-    jz      3f
+    test    edx, edx
+    // In case of invalid subst, panic.
+    jnz      4f
+    call    panic
+4:
    
-    // AX = address of the value.
-    lea     ax, [bp + ARG(1)]
-    mov     cx, [bp - 0x2]
-    shl     cx, 1
-    add     ax, cx
+    // EAX = address of the value = Address of first arg + <num args used> * 4.
+    lea     eax, [ebp + 0xC]
+    mov     ecx, [ebp - 0x4]
+    shl     ecx, 2
+    add     eax, ecx
 
-    // Push the arguments for the call to _b_16_printf_output_hex.
-    push    ax
-    push    dx
+    // Push the arguments for the call to _printf_output_hex.
+    push    eax
+    push    edx
 
-    // DX = ceil(DX / 2) = the number of arguments from the variadic list used
-    // for this substitution.
-    dec     dx
-    shr     dx, 1
-    inc     dx
+    // EDX = ceil(EDX / 8) = the number of arguments from the variadic list used
+    // for this substitution. This is because for any value under 32-bit we
+    // still push a DWORD onto the stack.
+    dec     edx
+    shr     edx, 3
+    inc     edx
 
     // Update the arg counter.
-    add     WORD PTR [bp - 0x2], dx
+    add     [ebp - 0x4], edx
     
     // Output the value.
-    call    _b_16_printf_output_hex
-    add     sp, 4
+    call    _printf_output_hex
+    add     esp, 4
 
 // Update loop iteration and go to next ite.
 3:
-    inc     bx
+    inc     ebx
 1:
-    movzx   ax, BYTE PTR [bx]
+    mov     al, [ebx]
     test    al, al
     jnz     0b
 
-    pop     bx
+    pop     ebx
     // Clean up local var(s).
-    add     sp, 2
-    pop     bp
+    add     esp, 4
+    leave
     ret

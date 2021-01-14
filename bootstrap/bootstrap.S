@@ -13,16 +13,6 @@
 // This routine will enable 32-bit Protected Mode and jump to the main routine.
 // ============================================================================= 
 ASM_FUNC_DEF16(second_sector_entry):
-    // Clear the buffer from logging from the BIOS.
-    call    b_16_clear_vga_buffer
-
-    // Print boot message with drive number.
-    movzx   dx, BYTE PTR [drive_number]
-    push    dx
-    push    OFFSET FLAT : [str_boot_message]
-    call    b_16_printf
-    add     sp, 4
-
     // Save the Real-Mode IDT in case we ever want to go back to real-mode.
     sidt    [real_mode_idtr]
 
@@ -169,14 +159,11 @@ ASM_FUNC_DEF32(call_real_mode):
 // Does not return.
 // ============================================================================= 
 ASM_FUNC_DEF32(bootstrap_main):
-    // Example of calling a real-mode function from 32-bit PM.
-    lea     ax, [str_main_message]
-    sub     esp, 2
-    mov     WORD PTR [esp], ax
-    lea     eax, [b_16_printf]
-    push    eax
-    call    call_real_mode
-    add     esp, 6
+    call    clear_vga_buffer
+
+    push    OFFSET FLAT : str_main_message
+    call    printf
+    add     esp, 4
 
     // This is where we would typically jump to the rust main function.
     jmp     0f
@@ -192,17 +179,12 @@ ASM_FUNC_DEF32(bootstrap_main):
 // This function DOES NOT RETURN.
 // ============================================================================= 
 ASM_FUNC_DEF32(panic):
-    // For now logging functions are only available in 16-bit mode.
     // Push EIP where the panic occured.
     push    [esp]
     // Push format string.
-    lea     ax, [str_panic_message]
-    sub     esp, 2
-    mov     WORD PTR [esp], ax
-    lea     eax, [b_16_printf]
-    push    eax
-    call    call_real_mode
-    add     esp, 10
+    push    OFFSET FLAT : str_panic_message
+    call    printf
+    add     esp, 8 
 
     // Lock up the cpu.
 0:
