@@ -57,3 +57,36 @@
     lea     eax, [999999b]  ;\
     push    eax             ;\
     call    panic
+
+// Helper macro to printf with a prefix. The prefix and the format string will
+// be defined by the macro in the .data section of the current file. This macros
+// will push the concatenation of prefix and fmt and will pop them from the
+// stack.
+// @param prefix: Prefix to the line to be printed.
+// @param fmt: Format string.
+#define _PRINTF(prefix, fmt)    ;\
+    .section .data              ;\
+    999999:                     ;\
+    .ascii prefix               ;\
+    .ascii " "                  ;\
+    .asciz fmt                  ;\
+    .section .text              ;\
+    lea     eax, [999999b]      ;\
+    push    eax                 ;\
+    call    printf              ;\
+    add     esp, 4
+
+// Print an info message (prefixed by [INFO ]).
+// @param fmt: The format string.
+#define INFO(fmt)   ;\
+    _PRINTF("[INFO ] :", fmt)
+
+// Print a debug message (prefixed by [DEBUG]).
+// @param fmt: The format string.
+#define DEBUG(fmt)  ;\
+    _PRINTF("[DEBUG] :", fmt)
+
+// Print a warning message (prefixed by [WARN ]).
+// @param fmt: The format string.
+#define WARN(fmt)   ;\
+    _PRINTF("[WARN ] :", fmt)

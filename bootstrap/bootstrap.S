@@ -161,9 +161,11 @@ ASM_FUNC_DEF32(call_real_mode):
 ASM_FUNC_DEF32(bootstrap_main):
     call    clear_vga_buffer
 
-    push    OFFSET FLAT : str_main_message
-    call    printf
+    push    [drive_number]
+    INFO("Bootstrap coded loaded from drive %b\n")
     add     esp, 4
+
+    INFO("Bootstrap main started\n")
 
     // This is where we would typically jump to the rust main function.
     PANIC32("Not yet implemented")
@@ -183,12 +185,9 @@ ASM_FUNC_DEF32(panic):
     push    ebp
     mov     ebp, esp
 
-    // Push EIP where the panic occured.
     push    [ebp + 0x4]
-    // Push format string.
-    push    OFFSET FLAT : str_panic_message
-    call    printf
-    add     esp, 8 
+    _PRINTF("[PANIC] :", "IP = %d : ")
+    add     esp, 4 
 
     // Print message
     push    [ebp + 0x8]
@@ -224,13 +223,3 @@ gdt_end:
 // used when switching back to real-mode from protected mode.
 real_mode_idtr:
 .skip   6
-
-// Boot message displayed when the bootstrap code has been fully loaded.
-str_boot_message:
-.asciz  "Bootstrap code successfully loaded from drive %b\n"
-
-str_main_message:
-.asciz  "Bootstrap code main executed\n"
-
-str_panic_message:
-.asciz  "PANIC @ IP = %d : "
