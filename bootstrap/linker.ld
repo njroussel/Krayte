@@ -28,5 +28,15 @@ SECTIONS
         SECTION_DATA_END = .;
     }
 
+    .test_table :
+    {
+        /* The run_tests routine expects the TEST_TABLE_START and TEST_TABLE_END
+         * symbols to indicate the start (respectively end) of the test table.
+         */
+        TEST_TABLE_START = .;
+        *(.data.test_table)
+        TEST_TABLE_END = .;
+    }
+
     BOOTSTRAP_END = .;
 }

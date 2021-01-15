@@ -23,7 +23,7 @@ bootstrap.img: $(OBJ_FILES)
 	ld -T $(LINKER_SCRIPT) --oformat binary -o $@ $^
 
 %.o: %.S asm_macros.h
-	$(CC) -c $< -o $@ -I./
+	$(CC) -c $< -o $@ -I./ -I$(dir $<)
 
 run: bootstrap.img
 	qemu-system-x86_64 -drive file=$<,format=raw -s -m 512 -no-reboot -no-shutdown

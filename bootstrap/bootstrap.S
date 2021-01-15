@@ -167,6 +167,9 @@ ASM_FUNC_DEF32(bootstrap_main):
 
     INFO("Bootstrap main started\n")
 
+    INFO("Running tests\n")
+    call    run_tests
+
     // This is where we would typically jump to the rust main function.
     PANIC32("Not yet implemented")
 0:
