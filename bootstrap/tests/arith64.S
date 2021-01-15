@@ -1,6 +1,7 @@
 // Some tests for the routines defined in arith64.S.
 
 #include <asm_macros.h>
+#include <consts.h>
 #include <test_macros.h>
 
 .intel_syntax   noprefix
@@ -24,28 +25,28 @@ ASM_FUNC_DEF32(cmp64_test):
     push    0xCAFECAFE
     mov     esi, esp
 
-    // cmp64(A, B) == 1
+    // cmp64(A, B) == ARITH64_ABOVE
     push    esi
     push    edi
     call    cmp64
     add     esp, 8
-    cmp     eax, 1
+    cmp     eax, ARITH64_ABOVE
     jne     1
 
-    // cmp64(B, A) == -1
+    // cmp64(B, A) == ARITH64_BELOW
     push    edi
     push    esi
     call    cmp64
     add     esp, 8
-    cmp     eax, -1
+    cmp     eax, ARITH64_BELOW
     jne     1
 
-    // cmp64(A, A) == 0
+    // cmp64(A, A) == ARITH64_EQUAL
     push    edi
     push    edi
     call    cmp64
     add     esp, 8
-    cmp     eax, 0
+    cmp     eax, ARITH64_EQUAL
     jne     1
     
 0:
@@ -120,8 +121,8 @@ ASM_FUNC_DEF32(add64_test):
     xor     eax, eax
 
 1:
-    // Get rid of result and operands.
-    add     esp, 24
+    // Get rid of result and operands + expected result.
+    add     esp, 0x20
 
     pop     esi
     pop     edi

@@ -1,6 +1,7 @@
 // Main file for testing. This will run all the tests of the project.
 
 #include <asm_macros.h>
+#include <consts.h>
 #include <test_macros.h>
 
 .intel_syntax   noprefix
@@ -23,6 +24,37 @@
 .set TEST_TABLE_FUNC_PTR_OFF, 0x4
 
 // ============================================================================= 
+// Check that no callee saved register has been clobbered during a test. This
+// can catch a lot of accidental clobbering (from implementation or even tests
+// themselves) but not all unfortunately.
+// No arguments and no return, however ESP is expected to point on saved
+// registers (from pusha) before calling this function.
+// This routine will panic if any clobbering is detected.
+// ============================================================================= 
+ASM_FUNC_DEF32(_check_callee_save_registers):
+    // EAX = pointer to saved registers.
+    lea     eax, [esp + 4]
+
+    // We can reuse the consts BCP_<reg>_OFF here. All we need to do is sub 2
+    // from them since the first saved register in the BCP is at offset 0x2.
+    cmp     edi, [eax + BCP_EDI_OFF - 0x2]
+    jne     0f
+    cmp     esi, [eax + BCP_ESI_OFF - 0x2]
+    jne     0f
+    cmp     ebp, [eax + BCP_EBP_OFF - 0x2]
+    jne     0f
+    cmp     ebx, [eax + BCP_EBX_OFF - 0x2]
+    jne     0f
+
+    jmp     1f
+0:
+    PANIC32("Register clobbering detected!\n")
+    // Unreachable
+    int3
+1:
+    ret
+
+// ============================================================================= 
 // Execute all tests registered in the test table and print a summary.
 // ============================================================================= 
 ASM_FUNC_DEF32(run_tests):
@@ -32,6 +64,8 @@ ASM_FUNC_DEF32(run_tests):
     // Local variables:
     // EBP - 0x4: Number of tests ran so far.
     // EBP - 0x8: Number of successful test so far.
+    // EBP - 0xC: Return value of last test.
+    push    0x0
     push    0x0
     push    0x0
 
@@ -44,13 +78,25 @@ ASM_FUNC_DEF32(run_tests):
 loop:
     // EAX = Address of test routine.
     mov     eax, [ebx + TEST_TABLE_FUNC_PTR_OFF] 
+
+    // Push the GP registers onto the stack right before calling the test. We
+    // will use these saved values to detect any register clobbering.
+    pusha
     // Run the test
     call    eax
+    // Save return value during call to _check_callee_save_registers.
+    mov     [ebp - 0xC], eax
+
+    // Check that no callee-saved register has been clobbered.
+    call    _check_callee_save_registers
+    // Remove saved registers.
+    add     esp, 4 * 8
 
     // Increment the number of tests ran.
     inc     DWORD PTR [ebp - 0x4]
 
     // Print correct prefix depending on the outcome of the test.
+    mov     eax, [ebp - 0xC]
     test    eax, eax
     jnz     0f
     
