@@ -314,7 +314,7 @@ ASM_FUNC_DEF32(printf):
     
     // Output the value.
     call    _printf_output_hex
-    add     esp, 4
+    add     esp, 8
 
 // Update loop iteration and go to next ite.
 3:
