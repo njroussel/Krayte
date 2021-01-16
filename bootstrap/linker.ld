@@ -39,4 +39,8 @@ SECTIONS
     }
 
     BOOTSTRAP_END = .;
+
+    /* The end of the bootstrap marks the beginning of the dynamic memory
+     * allocator. */
+    ALLOC_BEGIN = .;
 }

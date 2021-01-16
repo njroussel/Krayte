@@ -177,6 +177,40 @@ ASM_FUNC_DEF32(bootstrap_main):
     hlt
     jmp     0b
 
+// ============================================================================= 
+// Rudimentary dynamic memory allocation. This is only meant for memory that
+// will never be freed. The allocations are placed after the bootstrap code and
+// data segment and under 0xFFFF so that they will always be accessible from
+// real-mode code.
+// @param (DWORD) size: The number of bytes to allocated.
+// ============================================================================= 
+ASM_FUNC_DEF32(allocate_low_mem):
+    push    ebp
+    mov     ebp, esp
+
+    // EAX = Address of next allocation (this allocation).
+    mov     eax, [alloc_addr]
+
+    // ECX = New address of alloc_addr.
+    mov     ecx, eax
+    add     ecx, [ebp + 0x8]
+    cmp     eax, 0xFFFF
+    jb      0f
+
+    // The address will not fit in a 16-bit registers.
+    PANIC32("No space left\n")
+0:
+
+    // Allocation OK. Move the alloc_addr.
+    mov     [alloc_addr], ecx
+    // EAX is already pointing to the beginning of the allocated memory.
+    leave
+    ret
+
+.section .data
+// Pointer to the next address available for allocation.
+alloc_addr:
+.long   ALLOC_BEGIN
 
 // ============================================================================= 
 // Panic the bootstrap code, this will print a message indicating where the
