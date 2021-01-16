@@ -33,3 +33,22 @@
 #define ARITH64_EQUAL   0
 #define ARITH64_ABOVE   1
 // ============================================================================= 
+
+// ============================================================================= 
+// Memory Map Entry (MME)
+// (QWORD) The base address of the memory region described by this entry.
+#define MME_BASE_OFF    0x00
+// (QWORD) The length of the memory region described by this entry.
+#define MME_LENGTH_OFF  0x08
+// (DWORD) The type of the memory region described by this entry.
+#define MME_TYPE_OFF    0x10
+
+#define MME_SIZE        0x14
+
+// Here are the possible values for the type field of a MME:
+// The memory region is available for use.
+#define MME_TYPE_AVAIL  0x1
+// The memory region is reserved (mmem-map devices, ...).
+#define MME_TYPE_RESRV  0x1
+// Other values are possible but considered reserved as well for this project.
+// ============================================================================= 
