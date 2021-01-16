@@ -44,7 +44,7 @@ ASM_FUNC_DEF32(scroll_vga_buffer):
     // Copy the content from line i+1 to line i for all lines except the bottom
     // one.
     mov     edi, VGA_BUFFER
-    mov     esi, VGA_WIDTH * 2
+    mov     esi, VGA_BUFFER + VGA_WIDTH * 2
     mov     ecx, VGA_WIDTH * VGA_HEIGHT - VGA_WIDTH
     cld
     rep     movsw
@@ -302,11 +302,11 @@ ASM_FUNC_DEF32(printf):
     push    eax
     push    edx
 
-    // EDX = ceil(EDX / 8) = the number of arguments from the variadic list used
+    // EDX = ceil(EDX / 4) = the number of arguments from the variadic list used
     // for this substitution. This is because for any value under 32-bit we
     // still push a DWORD onto the stack.
     dec     edx
-    shr     edx, 3
+    shr     edx, 2
     inc     edx
 
     // Update the arg counter.
