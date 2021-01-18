@@ -256,3 +256,39 @@ ASM_FUNC_DEF32(allocate_frame32):
     pop     ebx
     leave
     ret
+
+// =============================================================================
+// Get a free physical frame.
+// @return (RAX) Physical address of the allocated frame.
+// =============================================================================
+ASM_FUNC_DEF64(allocate_frame64):
+    push    rbp
+    mov     rbp, rsp
+
+    // RDI = Pointer on the head node.
+    mov     rdi, [FRAME_ALLOC_HEAD]
+
+    // Assert that the size is > 0.
+    cmp     QWORD PTR [rdi + NODE_SIZE_OFF], 0x0
+    jne     0f
+    // Size is zero. This should never happen.
+    PANIC64("Element of allocator's linked list has a size of 0\n")
+0:
+
+    // RAX = Address of the allocated frame.
+    mov     rax, [rdi + NODE_ADDR_OFF]
+
+    // Increase start address by PAGE_SIZE.
+    add     QWORD PTR [rdi + NODE_ADDR_OFF], PAGE_SIZE
+
+    // Decrease size by 1. 
+    dec     QWORD PTR [rdi + NODE_SIZE_OFF]
+    jne     .alloc_done64
+
+    // Group is empty, remove it from the linked-list.
+    mov     rcx, [rdi + NODE_NEXT_OFF]
+    mov     [FRAME_ALLOC_HEAD], rcx
+    
+.alloc_done64:
+    leave
+    ret
