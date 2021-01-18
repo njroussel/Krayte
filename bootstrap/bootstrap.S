@@ -172,9 +172,18 @@ ASM_FUNC_DEF32(bootstrap_main):
 
     call    init_mem_map
     call    init_frame_allocator
+    call    init_long_mode
 
+    lea     eax, [.long_mode_target]
+    push    0x0
+    push    eax
+    call    jump_to_long_mode
+    // Unreachable.
+    int3
+.code64
+.long_mode_target:
+    mov     r8, 0xdeadbeefbabecafe
     // This is where we would typically jump to the rust main function.
-    PANIC32("Not yet implemented")
 0:
     cli
     hlt
@@ -257,6 +266,10 @@ gdt:
 .quad GDT_ENTRY32(0x0, 0xFFFFF, 2)
 // Flat 32-bit code segment, ring 0, read, non-conforming.
 .quad GDT_ENTRY32(0x0, 0xFFFFF, 10)
+// Flat 64-bit data segment, ring 0, read/write.
+.quad GDT_ENTRY64(0x0, 0xFFFFF, 2)
+// Flat 64-bit code segment, ring 0, read, non-conforming.
+.quad GDT_ENTRY64(0x0, 0xFFFFF, 10)
 gdt_end:
 
 // Saved value of the ITDR when the BIOS just loaded the first sector. This is
