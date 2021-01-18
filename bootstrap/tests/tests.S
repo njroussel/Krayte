@@ -101,23 +101,23 @@ loop:
     jnz     0f
     
     // Test was a failure. Print failure prefix.
-    _PRINTF("[TEST ] [FAIL] :", "")
+    _PRINTF32("[TEST ] [FAIL] :", "")
     jmp     1f
 
 0:
     // Test was a success. Print success prefix.
-    _PRINTF("[TEST ] [ OK ] :", "")
+    _PRINTF32("[TEST ] [ OK ] :", "")
     // And increase successes count.
     inc     DWORD PTR [ebp - 0x8]
 
 1:
     // Print test name.
     push    [ebx + TEST_TABLE_FUNC_NAME_OFF]
-    call    printf
+    call    printf32
     add     esp, 4
 
     push    '\n'
-    call    putc_vga_buffer
+    call    putc_vga_buffer32
     add     esp, 4
 
     // Move to next entry in test table.
@@ -136,14 +136,14 @@ cond:
     sub     eax, [ebp - 0x8]
     push    [ebp - 0x4]
     push    eax
-    _PRINTF("[TEST ] [SUMM] :", "%d / %d tests failed!\n")
+    _PRINTF32("[TEST ] [SUMM] :", "%d / %d tests failed!\n")
     add     esp, 8
     jmp     1f
 
 0:
     // All tests Successful.
     push    [ebp - 0x4]
-    _PRINTF("[TEST ] [SUMM] :", "All %d tests passed!\n")
+    _PRINTF32("[TEST ] [SUMM] :", "All %d tests passed!\n")
     add     esp, 4
 
 1:

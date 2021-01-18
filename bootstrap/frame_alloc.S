@@ -79,7 +79,7 @@ ASM_FUNC_DEF32(init_frame_allocator):
     push    edi
     push    esi
 
-    INFO("Init physical frame allocator\n")
+    INFO32("Init physical frame allocator\n")
 
     // EDI = entry index.
     xor     edi, edi
@@ -146,7 +146,7 @@ ASM_FUNC_DEF32(init_frame_allocator):
     push    [eax + NODE_SIZE_OFF]
     push    [eax + NODE_ADDR_OFF + 4]
     push    [eax + NODE_ADDR_OFF]
-    INFO("Available memory @ %q with %q frames\n")
+    INFO32("Available memory @ %q with %q frames\n")
     add     esp, 0x10
     pop     eax
 

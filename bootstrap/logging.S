@@ -13,7 +13,7 @@
 // ============================================================================= 
 // Clear the VGA text buffer. This result in a black screen.
 // ============================================================================= 
-ASM_FUNC_DEF32(clear_vga_buffer):
+ASM_FUNC_DEF32(clear_vga_buffer32):
     push    ebp
     mov     ebp, esp
     push    edi
@@ -35,7 +35,7 @@ ASM_FUNC_DEF32(clear_vga_buffer):
 // ============================================================================= 
 // Scroll the VGA text buffer up, and clear the bottom line.
 // ============================================================================= 
-ASM_FUNC_DEF32(scroll_vga_buffer):
+ASM_FUNC_DEF32(scroll_vga_buffer32):
     push    ebp
     mov     ebp, esp
     push    esi
@@ -66,7 +66,7 @@ ASM_FUNC_DEF32(scroll_vga_buffer):
 // @param (DWORD) char: The ASCII char to be printed. Only the bottom byte is
 // used.
 // ============================================================================= 
-ASM_FUNC_DEF32(putc_vga_buffer):
+ASM_FUNC_DEF32(putc_vga_buffer32):
     push    ebp
     mov     ebp, esp
     push    ebx
@@ -113,7 +113,7 @@ ASM_FUNC_DEF32(putc_vga_buffer):
     jb      0f
     
     // We reached the end of the VGA buffer, time to scroll up.
-    call    scroll_vga_buffer
+    call    scroll_vga_buffer32
     // The cursor goes to the beginning of the last line.
     mov     WORD PTR [putc_vga_buffer_cursor], VGA_WIDTH * (VGA_HEIGHT - 1)
     
@@ -125,6 +125,7 @@ ASM_FUNC_DEF32(putc_vga_buffer):
 
 // Cursor of the VGA text buffer. Indicate the index of the next char to be
 // printed.
+.global putc_vga_buffer_cursor
 putc_vga_buffer_cursor:
 .long   0x0
 
@@ -134,7 +135,7 @@ putc_vga_buffer_cursor:
 // @param (DWORD) size: The number of bytes of the value.
 // @param (DWORD) addr: Address where the value is stored.
 // ============================================================================= 
-ASM_FUNC_DEF32(_printf_output_hex):
+ASM_FUNC_DEF32(_printf_output_hex32):
     push    ebp
     mov     ebp, esp
 
@@ -142,12 +143,12 @@ ASM_FUNC_DEF32(_printf_output_hex):
     
     // Put '0'.
     push    0x30
-    call    putc_vga_buffer
+    call    putc_vga_buffer32
     add     esp, 4
 
     // Put 'x'.
     push    0x78
-    call    putc_vga_buffer
+    call    putc_vga_buffer32
     add     esp, 4
 
     // Since x86 is little-endian, the byte following the "0x" will be the byte
@@ -167,7 +168,7 @@ ASM_FUNC_DEF32(_printf_output_hex):
 
     // In order to output the correct representation of the byte, we need to do
     // some ASCII math on each half/4bits composing the byte.
-    // The goal here is to make two calls to putc_vga_buffer with the correct
+    // The goal here is to make two calls to putc_vga_buffer32 with the correct
     // digit or letter.
     // The math is the same for each half, hence we have a small loop that will
     // execute twice, computing the digit/letter and pushing it onto the stack.
@@ -197,9 +198,9 @@ ASM_FUNC_DEF32(_printf_output_hex):
     // At this point the stack contains:
     //  SP + 4 -> digit/letter of lower 4 bits of AL.
     //  SP     -> digit/letter of higher 4 bits of AL.
-    call    putc_vga_buffer
+    call    putc_vga_buffer32
     add     esp, 4
-    call    putc_vga_buffer
+    call    putc_vga_buffer32
     add     esp, 4
     
     // Move to previous byte.
@@ -229,7 +230,7 @@ ASM_FUNC_DEF32(_printf_output_hex):
 // The size of each value is at least a DWORD (hence for %b and %w one should
 // push an entire DWORD) or a QWORD for %q.
 // ============================================================================= 
-ASM_FUNC_DEF32(printf):
+ASM_FUNC_DEF32(printf32):
     push    ebp
     mov     ebp, esp
 
@@ -252,7 +253,7 @@ ASM_FUNC_DEF32(printf):
 
     // Regular character, simply output it.
     push    eax
-    call    putc_vga_buffer
+    call    putc_vga_buffer32
     add     esp, 4
     jmp     3f
 
@@ -298,7 +299,7 @@ ASM_FUNC_DEF32(printf):
     shl     ecx, 2
     add     eax, ecx
 
-    // Push the arguments for the call to _printf_output_hex.
+    // Push the arguments for the call to _printf_output_hex32.
     push    eax
     push    edx
 
@@ -313,7 +314,7 @@ ASM_FUNC_DEF32(printf):
     add     [ebp - 0x4], edx
     
     // Output the value.
-    call    _printf_output_hex
+    call    _printf_output_hex32
     add     esp, 8
 
 // Update loop iteration and go to next ite.

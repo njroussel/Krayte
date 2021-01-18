@@ -106,7 +106,7 @@ loop:
     // This is the first entry. Save the address.
     mov     [MEM_MAP_START], edi
     push    edi
-    INFO("Memory map starting @ %d:\n")
+    INFO32("Memory map starting @ %d:\n")
     add     esp, 4
 0:
 
@@ -126,7 +126,7 @@ loop:
     push    DWORD PTR [edi + MME_LENGTH_OFF]
     push    DWORD PTR [edi + MME_BASE_OFF + 4]
     push    DWORD PTR [edi + MME_BASE_OFF]
-    INFO("Base = %q Len = %q Type = %d\n")
+    INFO32("Base = %q Len = %q Type = %d\n")
     add     esp, 20
 
     // Loop until the BIOS reports next index of 0 indicating the end of the
@@ -135,7 +135,7 @@ loop:
     jnz     loop
 
     push    [MEM_MAP_NUM_ENTRIES]
-    INFO("%d entries in memory map\n")
+    INFO32("%d entries in memory map\n")
     add     esp, 4
 
     pop     edi

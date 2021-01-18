@@ -159,15 +159,15 @@ ASM_FUNC_DEF32(call_real_mode):
 // Does not return.
 // ============================================================================= 
 ASM_FUNC_DEF32(bootstrap_main):
-    call    clear_vga_buffer
+    call    clear_vga_buffer32
 
     push    [drive_number]
-    INFO("Bootstrap coded loaded from drive %b\n")
+    INFO32("Bootstrap coded loaded from drive %b\n")
     add     esp, 4
 
-    INFO("Bootstrap main started\n")
+    INFO32("Bootstrap main started\n")
 
-    INFO("Running tests\n")
+    INFO32("Running tests\n")
     call    run_tests
 
     call    init_mem_map
@@ -184,6 +184,7 @@ ASM_FUNC_DEF32(bootstrap_main):
 .long_mode_target:
     mov     r8, 0xdeadbeefbabecafe
     // This is where we would typically jump to the rust main function.
+    PANIC64("Not implemented\n")
 0:
     cli
     hlt
@@ -230,22 +231,47 @@ alloc_addr:
 // This function DOES NOT RETURN.
 // @param (DWORD) message: Pointer on a string describing the error.
 // ============================================================================= 
-ASM_FUNC_DEF32(panic):
+ASM_FUNC_DEF32(panic32):
     push    ebp
     mov     ebp, esp
 
     push    [ebp + 0x4]
-    _PRINTF("[PANIC] :", "IP = %d : ")
+    _PRINTF32("[PANIC] :", "IP = %d : ")
     add     esp, 4 
 
     // Print message
     push    [ebp + 0x8]
-    call    printf
+    call    printf32
     add     esp, 4
 
     // Lock up the cpu.
 0:
     mov     eax, 0xDEADC0DE
+    cli
+    hlt
+    jmp     0b
+
+// ============================================================================= 
+// 64-bit version of the panic32 routine.
+// This function DOES NOT RETURN.
+// @param (RDI) message: Pointer on a string describing the error.
+// ============================================================================= 
+ASM_FUNC_DEF64(panic64):
+    push    rbp
+    mov     rbp, rsp
+
+    push    rdi
+
+    push    [rbp + 0x8]
+    _PRINTF64("[PANIC] :", "IP = %q : ")
+    add     esp, 8 
+
+    // Print message
+    pop     rdi
+    call    printf64
+    // Lock up the cpu.
+0:
+    mov     rax, 0xDEADC0DEDEADC0DE
     cli
     hlt
     jmp     0b

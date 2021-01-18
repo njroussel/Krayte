@@ -70,7 +70,16 @@
     .section .text          ;\
     lea     eax, [999999b]  ;\
     push    eax             ;\
-    call    panic
+    call    panic32
+
+// Same as PANIC32 but for 64-bit mode.
+#define PANIC64(msg)        ;\
+    .section .data          ;\
+    999999:                 ;\
+    .asciz msg              ;\
+    .section .text          ;\
+    lea     rdi, [999999b]  ;\
+    call    panic64
 
 // Helper macro to printf with a prefix. The prefix and the format string will
 // be defined by the macro in the .data section of the current file. This macros
@@ -78,7 +87,7 @@
 // stack.
 // @param prefix: Prefix to the line to be printed.
 // @param fmt: Format string.
-#define _PRINTF(prefix, fmt)    ;\
+#define _PRINTF32(prefix, fmt)  ;\
     .section .data              ;\
     999999:                     ;\
     .ascii prefix               ;\
@@ -87,20 +96,37 @@
     .section .text              ;\
     lea     eax, [999999b]      ;\
     push    eax                 ;\
-    call    printf              ;\
+    call    printf32            ;\
     add     esp, 4
+
+// Same as _PRINTF32 but for 64-bit mode.
+#define _PRINTF64(prefix, fmt)  ;\
+    .section .data              ;\
+    999999:                     ;\
+    .ascii prefix               ;\
+    .ascii " "                  ;\
+    .asciz fmt                  ;\
+    .section .text              ;\
+    lea     rdi, [999999b]      ;\
+    call    printf64            ;\
 
 // Print an info message (prefixed by [INFO ]).
 // @param fmt: The format string.
-#define INFO(fmt)   ;\
-    _PRINTF("[INFO ] :", fmt)
+#define INFO32(fmt)   ;\
+    _PRINTF32("[INFO ] :", fmt)
+#define INFO64(fmt)   ;\
+    _PRINTF64("[INFO ] :", fmt)
 
 // Print a debug message (prefixed by [DEBUG]).
 // @param fmt: The format string.
-#define DEBUG(fmt)  ;\
-    _PRINTF("[DEBUG] :", fmt)
+#define DEBUG32(fmt)  ;\
+    _PRINTF32("[DEBUG] :", fmt)
+#define DEBUG64(fmt)  ;\
+    _PRINTF64("[DEBUG] :", fmt)
 
 // Print a warning message (prefixed by [WARN ]).
 // @param fmt: The format string.
-#define WARN(fmt)   ;\
-    _PRINTF("[WARN ] :", fmt)
+#define WARN32(fmt)   ;\
+    _PRINTF32("[WARN ] :", fmt)
+#define WARN64(fmt)   ;\
+    _PRINTF64("[WARN ] :", fmt)
