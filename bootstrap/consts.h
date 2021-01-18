@@ -52,3 +52,19 @@
 #define MME_TYPE_RESRV  0x1
 // Other values are possible but considered reserved as well for this project.
 // ============================================================================= 
+
+// ============================================================================= 
+// Frame allocator consts.
+#define PAGE_SIZE 4096
+
+// The following are the offsets used for the nodes of the allocator's linked
+// list.
+// Offset of the `next` pointer in a node.
+#define NODE_NEXT_OFF 0x0
+// Offset of the start address in a node.
+#define NODE_ADDR_OFF 0x8
+// Offset of the block size in a node.
+#define NODE_SIZE_OFF 0x10
+// Total size of a node structure in bytes.
+#define NODE_SIZE 0x18
+// ============================================================================= 

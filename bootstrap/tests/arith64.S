@@ -215,3 +215,55 @@ ASM_FUNC_DEF32(sub64_test):
     leave
     ret
 REGISTER_TEST(sub64_test)
+
+ASM_FUNC_DEF32(_shr12_64_test):
+    push    ebp
+    mov     ebp, esp
+
+    // Test case 1: Result is > 0. Value has MSBs > 0.
+    push    0xDEADBEEF
+    push    0xCAFEBABE
+
+    push    esp
+    call    _shr12_64
+    add     esp, 4
+    // Expected EAX: 1
+    test    eax, eax
+    jz      0f
+    // Expected value: 0x000DEADBEEFCAFEB
+    cmp     DWORD PTR [esp + 4], 0x000DEADB
+    jne     0f
+    cmp     DWORD PTR [esp], 0xEEFCAFEB
+    jne     0f
+
+    // Test case 2: Result becomes 0.
+    add     esp, 8
+    push    0x0
+    push    0x400
+
+    push    esp
+    call    _shr12_64
+    add     esp, 4
+    // Expected EAX: 0
+    test    eax, eax
+    jnz     0f
+    // Expected value: 0x0
+    cmp     DWORD PTR [esp + 4], 0x0
+    jne     0f
+    cmp     DWORD PTR [esp], 0x0
+    jne     0f
+
+    // Test success.
+    add     esp, 8
+    mov     eax, 1
+    jmp     1f
+0:
+    // Test failure. Need to remove the value from the stack.
+    add     esp, 8
+    xor     eax, eax
+
+1:
+    leave
+    ret
+
+REGISTER_TEST(_shr12_64_test)

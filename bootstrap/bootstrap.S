@@ -171,6 +171,7 @@ ASM_FUNC_DEF32(bootstrap_main):
     call    run_tests
 
     call    init_mem_map
+    call    init_frame_allocator
 
     // This is where we would typically jump to the rust main function.
     PANIC32("Not yet implemented")
