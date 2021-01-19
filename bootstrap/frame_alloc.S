@@ -258,6 +258,60 @@ ASM_FUNC_DEF32(allocate_frame32):
     ret
 
 // =============================================================================
+// Allocate N contiguous frames.
+// @param N : The number of frames.
+// @return (EAX) The address of the first frame of the contiguous region.
+// FIXME: This is an extremely naive implementation that assumes the first group
+// of free frame contains at least N frames. This is ok in practice because the
+// first group is at 1MiB (assuming the BIOS mem map is sorted) and there is a
+// lot of free memory starting at 1MiB.
+// =============================================================================
+ASM_FUNC_DEF32(allocate_contiguous_frames32):
+    push    ebp
+    mov     ebp, esp
+    push    ebx
+    push    edi
+
+    // EBX = Addr of last allocated frame.
+    xor     ebx, ebx
+    // EDI = Add of first frame.
+    xor     edi, edi
+    // ECX = Number of frames.
+    mov     ecx, [ebp + 0x8]
+
+.alloc_cont_loop:
+    push    ecx
+
+    call    allocate_frame32
+
+    // ECX = Addr of last frame.
+    mov     ecx, ebx
+    // Update addr of last frame.
+    mov     ebx, eax
+
+    // If this is the first iteration set EDI and skip the comparison.
+    test    edi, edi
+    jnz     0f
+    mov     edi, eax
+    jmp     .alloc_cont_loop_next
+0:
+    // Not first iteration, make sure EAX - ECX == PAGE_SIZE.
+    sub     eax, ecx
+    cmp     eax, PAGE_SIZE
+    je      .alloc_cont_loop_next
+    PANIC32("Could not allocate contiguous frames for ELF file\n") 
+
+.alloc_cont_loop_next:
+    pop     ecx
+    loop    .alloc_cont_loop
+
+    mov     eax, edi
+    pop     edi
+    pop     ebx
+    leave
+    ret
+
+// =============================================================================
 // Get a free physical frame.
 // @return (RAX) Physical address of the allocated frame.
 // =============================================================================
