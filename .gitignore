@@ -6,3 +6,4 @@ target/
 
 *.img
 *.o
+bootstrap/debuginfo
