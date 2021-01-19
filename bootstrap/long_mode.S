@@ -110,6 +110,14 @@ ASM_FUNC_DEF32(init_long_mode):
 
     pop     ebx
 
+    // Add the recursive entry to the PML4.
+    // EAX = Physical address of PML4.
+    mov     eax, [PML4_ADDR]
+    // ECX = Address of last entry in PML4.
+    lea     ecx, [eax + 511 * 8]
+    or      [ecx], edx
+    or      [ecx], eax
+
     // Now populate the Page Table. Since we want to ID map the first 1MiB, we
     // need to initialize entries 0 through 255 included. Once again we simply
     // need the present and write bits as well as the address of the page it
