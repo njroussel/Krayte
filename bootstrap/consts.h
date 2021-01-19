@@ -68,3 +68,21 @@
 // Total size of a node structure in bytes.
 #define NODE_SIZE 0x18
 // ============================================================================= 
+
+// ============================================================================= 
+// Paging consts.
+// Mapping flags: These flags control how a physical frame is mapped to virtual
+// memory.
+// Enable write on the page.
+#define MAP_WRITE           (1 << 1)
+// Allow user access to the page.
+#define MAP_USER            (1 << 2)
+// All writes are write through.
+#define MAP_WRITE_THROUGH   (1 << 3)
+// Disable cache for the memory addresses pointing to this page.
+#define MAP_CACHE_DISABLE   (1 << 4)
+// Set the global bit.
+#define MAP_GLOBAL          (1 << 8)
+// Indicate that the page is non-executable.
+#define MAP_NO_EXEC         (1 << 63)
+// ============================================================================= 
