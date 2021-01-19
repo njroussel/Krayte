@@ -86,3 +86,22 @@
 // Indicate that the page is non-executable.
 #define MAP_NO_EXEC         (1 << 63)
 // ============================================================================= 
+
+// ============================================================================= 
+// Disk Address Packet (DAP). This data structure is used by the BIOS function
+// int 0x13/AH 0x42 to load sectors/blocks from a disk into memory.
+
+// (BYTE) The size of the DAP. Must be DAP_SIZE.
+#define DAP_SIZE_OFF        0x0
+// (BYTE) Reserved, must be 0.
+#define DAP_RESV_OFF        0x1
+// (WORD) The number of blocks to read from disk.
+#define DAP_NUM_BLOCKS_OFF  0x2
+// (DWORD) Where to copy the blocks.
+#define DAP_DEST_OFF        0x4
+// (QWORD) Start index of the blocks to copy.
+#define DAP_START_BLOCK_OFF 0x8
+
+// Size of the DAP structure.
+#define DAP_SIZE    0x10
+// ============================================================================= 

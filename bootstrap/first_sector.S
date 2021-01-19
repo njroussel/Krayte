@@ -4,6 +4,7 @@
 // data) into RAM and execute it.
 
 #include <asm_macros.h>
+#include <consts.h>
 
 // This is an Intel syntax Minecraft server, so no $,%,(,) thanks.
 .intel_syntax noprefix
@@ -58,6 +59,9 @@ ASM_FUNC_DEF16_NO_SECTION(entry):
     // Size is not a multiple of 512, add 1 for the partial sector.
     inc     eax
 0:
+    // Save number of sectors used by the bootstrap code.
+    mov     DWORD PTR [num_bootstrap_sector], eax
+
     // We will load the sectors from 1 to N.
     dec     eax
 
@@ -65,22 +69,37 @@ ASM_FUNC_DEF16_NO_SECTION(entry):
     // to compare with the output of the BIOS function.
     push    eax
 
-    mov     WORD PTR [disk_access_packet_num_blocks], ax 
-    mov     DWORD PTR [disk_access_packet_addr], 0x7E00
-    mov     DWORD PTR [disk_access_packet_start_block], 1
-    mov     DWORD PTR [disk_access_packet_start_block + 4], 0
+    // Allocate Disk Access Packet on stack.
+    sub     sp, DAP_SIZE
 
+    // Fill the packet.
+    mov     bx, sp
+    mov     BYTE PTR [bx + DAP_SIZE_OFF], DAP_SIZE
+    mov     BYTE PTR [bx + DAP_RESV_OFF], 0x0
+    mov     WORD PTR [bx + DAP_NUM_BLOCKS_OFF], ax
+    mov     DWORD PTR [bx + DAP_DEST_OFF], 0x7E00
+    mov     DWORD PTR [bx + DAP_START_BLOCK_OFF], 1
+    mov     DWORD PTR [bx + DAP_START_BLOCK_OFF + 4], 0
+
+    // Call the BIOS function to initiate the transfert.
     mov     ah, 0x42
     mov     dl, [drive_number]
-    lea     si, [disk_access_packet]
+    mov     si, sp
     int     0x13
 
     // If carry flag is set then an error occured.
     jc      die
 
+    // BX = Number of blocks transfered.
+    mov     bx, sp
+    mov     bx, [bx + DAP_NUM_BLOCKS_OFF]
+
+    // Get rid of DAP from stack.
+    add     sp, DAP_SIZE
+
     // Check that all sectors have been loaded.
     pop     eax
-    cmp     ax, [disk_access_packet_num_blocks]
+    cmp     ax, bx
     jne     die
 
     // All blocks have been successfully loaded, we can jump to the code on the
@@ -107,18 +126,10 @@ ASM_FUNC_DEF16_NO_SECTION(die):
 drive_number:
 .byte   0x0
 
-// The disk access "packet", passed as argument when using the sector loading
-// BIOS function.
-disk_access_packet:
-.byte   0x10
-.byte   0x0
-// Number of blocks to transfert.
-disk_access_packet_num_blocks:
-.word   0x0
-disk_access_packet_addr:
+// The number of sectors on disk used by the bootstrap code.
+.global num_bootstrap_sector
+num_bootstrap_sector:
 .long   0x0
-disk_access_packet_start_block:
-.quad   0x0
 
 . = 0x1FE
 // Magic number at the end of the sector to make it bootable.
