@@ -272,3 +272,42 @@ expected_gen_loop:
     leave
     ret
 REGISTER_TEST(call_bios_func_32_test)
+
+// ============================================================================= 
+// Test the read_sector routine.
+// ============================================================================= 
+ASM_FUNC_DEF32(read_sector_test):
+    push    ebp
+    mov     ebp, esp
+    push    edi
+    push    esi
+
+    // Allocate enough space on stack to read two sectors.
+    sub     esp, 1024
+    mov     eax, esp
+
+    // Read sectors 1 and 2 onto the stack.
+    push    2
+    push    1
+    push    eax
+    call    read_sector
+    add     esp, 0xC
+
+    // Sectors 1 and 2 contains the bootstrap code loaded at address 0x7E00.
+    // Compare with what we just read.
+    mov     esi, 0x7E00
+    mov     edi, esp
+    mov     ecx, 1024
+    cld
+    repe    cmpsb
+    sete    al
+    movzx   eax, al
+
+    // Get rid of sector data.
+    add     esp, 1024
+
+    pop     esi
+    pop     edi
+    leave
+    ret
+REGISTER_TEST(read_sector_test)

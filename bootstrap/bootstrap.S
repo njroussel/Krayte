@@ -3,6 +3,7 @@
 // start the bootstrapping.
 
 #include <asm_macros.h>
+#include <consts.h>
 
 .intel_syntax   noprefix
 
@@ -189,6 +190,83 @@ ASM_FUNC_DEF32(bootstrap_main):
     cli
     hlt
     jmp     0b
+
+// ============================================================================= 
+// Read a sector from the boot disk.
+// @param dest: Where to read the sector to. This address must be under 64KiB.
+// @param start_idx: The index of the first sector to be read.
+// @param num_sectors: The number of sectors to read starting from the index
+// above.
+// ============================================================================= 
+ASM_FUNC_DEF32(read_sector):
+    push    ebp
+    mov     ebp, esp
+    push    edi
+
+    // Allocate Disk Access Packet onto the stack and zero it.
+    sub     esp, DAP_SIZE
+    xor     eax, eax
+    mov     edi, esp
+    mov     ecx, DAP_SIZE
+    cld
+    rep     stosb
+
+    // Fill in the Disk Access Packet.
+    mov     BYTE PTR [esp + DAP_SIZE_OFF], DAP_SIZE
+    mov     BYTE PTR [esp + DAP_RESV_OFF], 0x0
+    mov     eax, [ebp + 0x8]
+    mov     DWORD PTR [esp + DAP_DEST_OFF], eax
+    mov     eax, [ebp + 0xC]
+    mov     DWORD PTR [esp + DAP_START_BLOCK_OFF + 4], 0x0
+    mov     DWORD PTR [esp + DAP_START_BLOCK_OFF], eax
+    mov     eax, [ebp + 0x10]
+    mov     WORD PTR [esp + DAP_NUM_BLOCKS_OFF], ax
+
+    // Allocate BIOS Call packet onto the stack and zero it.
+    sub     esp, BCP_SIZE
+    xor     eax, eax
+    mov     edi, esp
+    mov     ecx, BCP_SIZE
+    cld
+    rep     stosb
+
+    // Int 0x13 AH 0x42 read from disk.
+    mov     BYTE PTR [esp + BCP_INT_OFF], 0x13
+    mov     DWORD PTR [esp + BCP_EAX_OFF], 0x4200
+    // DL = Drive number.
+    mov     al, [drive_number]
+    mov     BYTE PTR [esp + BCP_EDX_OFF], al
+    // SI points to the Disk Access Packet.
+    lea     eax, [esp + BCP_SIZE]
+    mov     WORD PTR [esp + BCP_ESI_OFF], ax
+
+    // Call the BIOS function.
+    push    esp
+    call    call_bios_func_32
+    add     esp, 4
+
+    // Make sure no error occured.
+    mov     al, [esp + BCP_CF_OFF]
+    test    al, al
+    jz      0f
+    hlt
+    PANIC32("read_sector: Error while reading sector\n")
+0:
+    // Get rid of BCP.
+    add     esp, BCP_SIZE
+
+    // Make sure all sectors were read. This is stored in the NUM_BLOCKS.
+    movzx   eax, WORD PTR [esp + DAP_NUM_BLOCKS_OFF]
+    cmp     eax, [ebp + 0x10]
+    je      0f
+    PANIC32("read_sector: Could not read all requested sectors\n")
+0:
+    // Get rid of DAP.
+    add     esp, DAP_SIZE
+
+    pop     edi
+    leave
+    ret
 
 // ============================================================================= 
 // Rudimentary dynamic memory allocation. This is only meant for memory that
