@@ -237,11 +237,11 @@ ASM_FUNC_DEF64(map_frame):
     test    r13, r13
     jnz     .map_loop
 
-    push    r15
-    push    r14
-    push    r13
-    push    r12
-    push    rbx
+    pop    r15
+    pop    r14
+    pop    r13
+    pop    r12
+    pop    rbx
 
     // Get rid of local var.
     add     rsp, 8
