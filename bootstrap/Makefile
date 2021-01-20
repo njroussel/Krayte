@@ -16,13 +16,7 @@ LINKER_SCRIPT=linker.ld
 # only to fail spectacularly.
 .SUFFIXES:
 
-all: disk.img
-
-# Create the final disk image from the bootstrap image and the ELF file.
-# Note: For now the ELF is replaced with a placeholder text file.
-disk.img: bootstrap.img
-	python -c "print(\"A\"*513)" > placeholder
-	./create_img.py	$@ $< placeholder
+all: bootstrap.img
 
 # Link all object files into the final disk image.
 # NOTE: In order to have debug information, GDB loads symbols from an ELF file.
@@ -35,11 +29,6 @@ bootstrap.img: $(OBJ_FILES)
 %.o: %.S asm_macros.h
 	$(CC) -g -O0 -c $< -o $@ -I./ -I$(dir $<)
 
-run: disk.img
-	qemu-system-x86_64 -drive file=$<,format=raw -s -m 16000 -no-reboot -no-shutdown -d int 2>out
-runs: disk.img
-	qemu-system-x86_64 -drive file=$<,format=raw -s -m 16000 -no-reboot -no-shutdown -S
-
 .PHONY: clean
 clean:
-	rm -rf bootstrap.img $(OBJ_FILES) disk.img placeholder
+	rm -rf bootstrap.img $(OBJ_FILES) debuginfo

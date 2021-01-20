@@ -227,6 +227,7 @@ ASM_FUNC_DEF32(bootstrap_main):
     pop     rax
 
     // Call the entry point of the process.
+    mov     rdi, [putc_vga_buffer_cursor]
     call    rax
 
     // In case we ever return from the process make sure that we don't
