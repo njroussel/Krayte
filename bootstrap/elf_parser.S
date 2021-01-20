@@ -145,16 +145,22 @@ ASM_FUNC_DEF64(_pht_process_load_segment):
     jz      .memsz_zero
 
     // Compute the number of pages required for this segment.
-    // RCX = Number of frames required.
-    test    rcx, (PAGE_SIZE - 1)
-    setnz   al
-    movsx   rax, al
-    shr     rcx, 12
-    add     rcx, rax
+    // RAX = Page index of the beginning of the segment.
+    mov     rax, [rbx + P_VADDR]
+    and     rax, ~(PAGE_SIZE - 1)
+    // RCX = Page index of the end of the segment.
+    mov     rcx, [rbx + P_VADDR]
+    add     rcx, [rbx + P_MEMSZ]
+    and     rcx, ~(PAGE_SIZE - 1)
+    // RCX = Number of pages for the segment.
+    sub     rcx, rax
+    // Ceil.
+    inc     rcx
 
-    // Allocate virtual memory for the segment. The size is given in p_memsz and
-    // the virtual address is p_vaddr.
-    mov     rdi, [rbx + P_VADDR]
+    // Allocate virtual memory for the segment. The P_VADDR given in the file is
+    // not necessarily page aligned, hence use RAX which is the rounded down
+    // address.
+    mov     rdi, rax
     // FIXME: Even though the entry would indicate the access bits of the
     // segment, we still need to write data into it. Hence set it to writable.
     mov     rsi, MAP_WRITE
