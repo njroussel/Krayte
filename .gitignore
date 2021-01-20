@@ -8,3 +8,4 @@ target/
 *.o
 bootstrap/debuginfo
 bootstrap/placeholder
+src/Krayte

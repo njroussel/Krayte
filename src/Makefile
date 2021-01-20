@@ -6,7 +6,9 @@ CC=g++
 # 	-static: There is no dynamic linking done by the bootstrap hence everything
 # 	must be static.
 # 	-nostdlib: Same as -static.
-CPPFLAGS=-ffreestanding -static -nostdlib
+# 	-fno-exceptions: Exceptions are not supported since they required a library.
+# 	-fno-rtti: No runtime support (at least yet).
+CPPFLAGS=-ffreestanding -static -nostdlib -fno-exceptions -fno-rtti
 
 SRC_DIR=./
 SOURCE_FILES:=$(shell find $(SRC_DIR) -type f -name "*.cpp")
