@@ -173,6 +173,10 @@ ASM_FUNC_DEF32(bootstrap_main):
 
     call    init_mem_map
     call    init_frame_allocator
+
+    // Once we can allocate frames, bring in the executable in memory.
+    call    copy_elf_file_to_ram
+
     call    init_long_mode
 
     lea     eax, [.long_mode_target]
@@ -249,7 +253,6 @@ ASM_FUNC_DEF32(read_sector):
     mov     al, [esp + BCP_CF_OFF]
     test    al, al
     jz      0f
-    hlt
     PANIC32("read_sector: Error while reading sector\n")
 0:
     // Get rid of BCP.
@@ -267,6 +270,153 @@ ASM_FUNC_DEF32(read_sector):
     pop     edi
     leave
     ret
+
+// ============================================================================= 
+// Copy the ELF file to be executed from disk to RAM. This routine will set the
+// global variables "metadata" and "file_start_addr".
+// ============================================================================= 
+ASM_FUNC_DEF32(copy_elf_file_to_ram):
+    push    ebp
+    mov     ebp, esp
+
+    // Local var:
+    //  EBP - 0x4: Number of sectors used by the file.
+    push    0x0
+
+    push    ebx
+    push    edi
+
+    // => Step 1: Allocate space for the metadata sector and load it into RAM.
+    // Allocate 512 for the metadata sector.
+    push    512
+    call    allocate_low_mem
+    add     esp, 4
+    mov     [metadata], eax
+    // EBX = Pointer to metadata sector loaded in RAM.
+    mov     ebx, eax
+
+    // Read the metadata sector.
+    push    0x1
+    push    [num_bootstrap_sector]
+    push    eax
+    call    read_sector
+    add     esp, 0xC
+
+    // Print some info about the file being loaded.
+    INFO32("Loading ELF file into RAM\n")
+    INFO32("Filename : ")
+    lea     eax, [ebx + METADATA_NAME_OFF]
+    push    eax
+    call    printf32
+    add     esp, 4
+    push    '\n'
+    call    putc_vga_buffer32
+    add     esp, 4
+    push    DWORD PTR [ebx + METADATA_SIZE_OFF]
+    INFO32("Size     : %d bytes\n")
+    push    DWORD PTR [ebx + METADATA_START_SEC_OFF]
+    INFO32("Start sec: %d\n")
+    add     esp, 8
+
+    // => Step 2: Allocate enough contiguous frames to contain the file into
+    // RAM.
+    // ECX = Number of frames to be allocated = ceil(size / PAGE_SIZE)
+    mov     ecx, [ebx + METADATA_SIZE_OFF]
+    // EAX = 1 if there if size not multiple of PAGE_SIZE, 0 otherwise.
+    test    ecx, (PAGE_SIZE - 1)
+    setnz   al
+    movzx   eax, al
+    // Do the shift and add EAX to get the ceil(size / PAGE_SIZE)
+    shr     ecx, 12
+    add     ecx, eax
+    // Save file size in frames.
+    mov     [file_num_frames], ecx
+
+    // Allocate the physical frames to load the file into.
+    push    ecx
+    // EAX = Start address where to copy the file.
+    call    allocate_contiguous_frames32
+    add     esp, 4
+    // Save file start addr.
+    mov     [file_start_addr], eax
+
+    // => Step 3: Copy the file's sectors from disk to RAM at the location
+    // allocated for it.
+    // ECX = Number of sectors to be loaded = ceil(size / 512)
+    mov     ecx, [ebx + METADATA_SIZE_OFF]
+    test    ecx, 511
+    setnz   al
+    movzx   eax, al
+    shr     ecx, 9
+    add     ecx, eax
+    // Save number of sectors.
+    mov     [ebp - 0x4], ecx
+
+    // Do the copy. Unfortunately the read_sector routine expects a dest address
+    // under 64KiB. Hence read the sector onto the stack and then copy the
+    // sector above 1MiB.
+    // EDI = Address where to copy the next sector (above 1MiB).
+    mov     edi, [file_start_addr]
+    // EDX = Index of next sector to be loaded.
+    xor     edx, edx
+copy_elf_loop:
+    push    edx
+
+    // Make space for the sector.
+    sub     esp, 512
+
+    // Read sector.
+    // EAX = next sector index.
+    mov     eax, [metadata]
+    mov     eax, [eax + METADATA_START_SEC_OFF]
+    add     eax, edx
+    // Read a single sector...
+    push    1
+    // Index = EAX...
+    push    eax
+    lea     eax, [esp + 0x8]
+    // Into the stack.
+    push    eax
+    call    read_sector
+    add     esp, 0xC
+
+    // Copy sector to memory.
+    mov     esi, esp
+    mov     ecx, 512 / 4
+    cld
+    rep     movsd
+
+    add     esp, 512
+
+    // Repeat for all sectors.
+    pop     edx
+    inc     edx
+    cmp     edx, [ebp - 0x4]
+    jb      copy_elf_loop
+
+    push    [file_start_addr]
+    INFO32("File loaded at %d\n")
+    add     esp, 4
+
+    pop     edi
+    pop     ebx
+
+    leave
+    ret
+
+.section .data
+// Pointer on the metadata sector loaded in RAM.
+.global metadata
+metadata:
+.long   0x0
+// The physical address where the file has been copied into RAM.
+.global file_start_addr
+file_start_addr:
+.long   0x0
+// The number of physical frames used by the file in RAM.
+.global file_num_frames
+file_num_frames:
+.long   0x0
 
 // ============================================================================= 
 // Rudimentary dynamic memory allocation. This is only meant for memory that

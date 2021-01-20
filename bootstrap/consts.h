@@ -105,3 +105,16 @@
 // Size of the DAP structure.
 #define DAP_SIZE    0x10
 // ============================================================================= 
+
+// ============================================================================= 
+// Metadata sector. The metadata sector is a special sector located on disk
+// right after the last sector used by the bootstrap. Its goal is to provide
+// information to locate the ELF file to be loaded and executed.
+// (DWORD) The size of the file in bytes.
+#define METADATA_SIZE_OFF       0x0
+// (DWORD) The index of the first sector containing the file. The file is stored
+// in contiguous sectors on the disk.
+#define METADATA_START_SEC_OFF  0x4
+// (NUL-terminated string) The name of the file.
+#define METADATA_NAME_OFF       0x8
+// ============================================================================= 
