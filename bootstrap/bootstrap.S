@@ -174,22 +174,63 @@ ASM_FUNC_DEF32(bootstrap_main):
     call    init_mem_map
     call    init_frame_allocator
 
-    // Once we can allocate frames, bring in the executable in memory.
+    // Copy the ELF file into RAM.
     call    copy_elf_file_to_ram
 
+    // Initialize long mode and jump to it. Warn: This is the point of no
+    // return, as for now there is no way to come back from long mode to 32-bit
+    // mode. Hence no possible way to interact with the BIOS after that!
     call    init_long_mode
-
-    lea     eax, [.long_mode_target]
     push    0x0
+    lea     eax, [.long_mode_target]
     push    eax
     call    jump_to_long_mode
     // Unreachable.
     int3
+
 .code64
 .long_mode_target:
-    mov     r8, 0xdeadbeefbabecafe
-    // This is where we would typically jump to the rust main function.
-    PANIC64("Not implemented\n")
+    // We are now in long mode, hence paging is enabled (mandatory for long
+    // mode), therefore we cannot access the physical memory containing the
+    // loaded file. Map those frames now.
+
+    // R12 = Physical address of file.
+    mov     r12d, DWORD PTR [file_start_addr]
+    // RCX = Number of frames to map.
+    mov     ecx, DWORD PTR [file_num_frames]
+.file_map_loop:
+    push    rcx
+
+    // Map the file in read-only.
+    mov     rdx, MAP_READ_ONLY
+    // Identity map the file.
+    mov     rdi, r12
+    mov     rsi, r12
+    call    map_frame
+
+    // Go to next iteration.
+    add     r12, PAGE_SIZE
+    pop     rcx
+    loop    .file_map_loop
+
+    // File is ID mapped to the `file_start_addr`. We can now parse the ELF and
+    // prepare the execution environment.
+    INFO64("Parsing ELF file\n")
+    mov     edi, [file_start_addr]
+    mov     esi, [metadata]
+    mov     esi, [esi + METADATA_SIZE_OFF]
+    call    parse_elf_from_ram
+    // RAX = Entry point of the executable.
+
+    push    rax
+    INFO64("Entry point is %q\n")
+    pop     rax
+
+    // Call the entry point of the process.
+    call    rax
+
+    // In case we ever return from the process make sure that we don't
+    // crash.
 0:
     cli
     hlt

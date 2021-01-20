@@ -73,6 +73,8 @@
 // Paging consts.
 // Mapping flags: These flags control how a physical frame is mapped to virtual
 // memory.
+// Define the page as read only.
+#define MAP_READ_ONLY       (0)
 // Enable write on the page.
 #define MAP_WRITE           (1 << 1)
 // Allow user access to the page.
