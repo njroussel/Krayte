@@ -160,6 +160,7 @@ ASM_FUNC_DEF32(call_real_mode):
 // Does not return.
 // ============================================================================= 
 ASM_FUNC_DEF32(bootstrap_main):
+    call    init_cache
     call    clear_vga_buffer32
 
     push    [drive_number]
@@ -236,6 +237,24 @@ ASM_FUNC_DEF32(bootstrap_main):
     cli
     hlt
     jmp     0b
+
+// ============================================================================= 
+// Enable the cache on the processor.
+// ============================================================================= 
+ASM_FUNC_DEF32(init_cache):
+    push    ebp
+    mov     ebp, esp
+
+    // Bit 30: Cache disable.
+    // Bit 29: Not write-through.
+    // Intel manual's recommends setting both of those bits to 0 for maximum
+    // performance.
+    mov     eax, cr0
+    and     eax, ~((1 << 30) | (1 << 29))
+    mov     cr0, eax
+
+    leave
+    ret
 
 // ============================================================================= 
 // Read a sector from the boot disk.
