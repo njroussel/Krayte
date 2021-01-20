@@ -248,3 +248,46 @@ ASM_FUNC_DEF64(map_frame):
 
     leave
     ret
+
+// =============================================================================
+// Allocate a memory area in the current virtual address space. This routine
+// will allocate physical frames and map them contiguously in virtual memory
+// starting at a given address.
+// @param (RDI) Virtual address where to create mapping.
+// @param (RSI) Flags of mapping.
+// @param (RDX) Number of pages to allocate.
+// =============================================================================
+ASM_FUNC_DEF64(alloc_virt):
+    push    rbp
+    mov     rbp, rsp
+    push    rbx
+    push    r12
+
+    // RBX = Next virtual address to map.
+    mov     rbx, rdi
+    // R12 = Mapping flags.
+    mov     r12, rsi
+
+.alloc_virt_loop:
+    push    rdx
+
+    // Allocate new frame. EAX = frame phy addr.
+    call    allocate_frame64
+
+    // Map the frame to the next virtual addr.
+    mov     rdi, rbx
+    mov     rsi, rax
+    mov     rdx, r12
+    call    map_frame
+
+    // Advance to next iteration.
+    add     rbx, PAGE_SIZE
+    pop     rdx
+    dec     rdx
+    test    rdx, rdx
+    jnz     .alloc_virt_loop
+
+    pop     r12
+    pop     rbx
+    leave
+    ret
