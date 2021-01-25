@@ -3,3 +3,9 @@ target/
 
 # IDE
 *.code-workspace
+
+*.img
+*.o
+bootstrap/debuginfo
+bootstrap/placeholder
+src/Krayte
