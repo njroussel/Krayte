@@ -1,5 +1,5 @@
-# Rust
-target/
+# build
+build/
 
 # IDE
 *.code-workspace
