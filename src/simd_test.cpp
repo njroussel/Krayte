@@ -2,6 +2,27 @@
 #include <iostream>
 #include <krayte/kr8md.h>
 
+namespace kr8md
+{
+    template <typename T, size_t W>
+    std::ostream &operator<<(std::ostream &os, const Pak<T, W> &pak)
+    {
+        os << "{";
+        for (size_t i = 0; i < W; i++)
+        {
+            os << pak.data[i];
+            if (i != W - 1)
+            {
+                os << ", ";
+            }
+        }
+        os << "}";
+
+        return os;
+    }
+
+} // namespace kr8md
+
 int main(void)
 {
     using pfloat4 = kr8md::Pak<float, 4>;
@@ -23,18 +44,8 @@ int main(void)
     pfloat4 vec_c1 = kr8md::add(vec_a, vec_b);
     pfloat4 vec_c2 = vec_a + vec_b;
 
-    std::cout << "c1" << std::endl;
-    for (size_t i = 0; i < 4; i++)
-    {
-        std::cout << vec_c1.data[i] << std::endl;
-    }
-    std::cout << std::endl;
-
-    std::cout << "c2" << std::endl;
-    for (size_t i = 0; i < 4; i++)
-    {
-        std::cout << vec_c2.data[i] << std::endl;
-    }
+    std::cout << "c1: " << vec_c1 << std::endl;
+    std::cout << "c2: " << vec_c2 << std::endl;
 
     return 0;
 }
