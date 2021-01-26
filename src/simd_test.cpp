@@ -27,6 +27,9 @@ int main(void)
 {
     using pfloat4 = kr8md::Pak<float, 4>;
 
+    std::cout << "sizeof pfloat4: " << sizeof(pfloat4) << std::endl;
+    std::cout << "sizeof __m256: " << sizeof(__m256) << std::endl;
+
     float arr_a[4] = {1.f,
                       2.f,
                       3.f,
