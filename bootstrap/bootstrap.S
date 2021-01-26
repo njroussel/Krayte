@@ -396,7 +396,11 @@ ASM_FUNC_DEF32(copy_elf_file_to_ram):
     // Allocate the physical frames to load the file into.
     push    ecx
     // EAX = Start address where to copy the file.
-    call    allocate_contiguous_frames32
+    call    allocate_n_frames32
+    cmp     eax, NO_FRAME
+    jne     0f
+    PANIC32("copy_elf_file_to_ram: Could not allocate enough contiguous frames")
+0:
     add     esp, 4
     // Save file start addr.
     mov     [file_start_addr], eax

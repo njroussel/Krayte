@@ -56,6 +56,9 @@
 // ============================================================================= 
 // Frame allocator consts.
 #define PAGE_SIZE 4096
+// Indicate failure during the frame allocation. Any value that is not page
+// aligned works.
+#define NO_FRAME  0xFFFFFFFF
 
 // The following are the offsets used for the nodes of the allocator's linked
 // list.
