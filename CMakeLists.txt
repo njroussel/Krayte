@@ -16,11 +16,11 @@ endif()
 # 	-nostdlib: Same as -static.
 # 	-fno-exceptions: Exceptions are not supported since they required a library.
 # 	-fno-rtti: No runtime support (at least yet).
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdlib")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffreestanding")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static")
+set(CMAKE_CXX_FLAGS_RELEASE"${CMAKE_CXX_FLAGS_RELEASE} -nostdlib")
+set(CMAKE_CXX_FLAGS_RELEASE"${CMAKE_CXX_FLAGS_RELEASE} -fno-exceptions")
+set(CMAKE_CXX_FLAGS_RELEASE"${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
 
 # Good practices
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wshadow=compatible-local")
@@ -35,9 +35,13 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
-add_executable(Krayte
-    # Header files
+#add_executable(Krayte
+#    # Source files
+#    src/main.cpp
+#    )
 
+add_executable(simd_test
+    # Header files
     # Source files
-    src/main.cpp
+    src/simd_test.cpp
     )
