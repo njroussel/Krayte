@@ -27,6 +27,7 @@ int main(void)
                       4.f};
 
     using pfloat = kr8md::Pak<float>;
+    using pfloat8 = kr8md::Pak<float, 8>;
 
     pfloat vec_tmp;
     std::cout << "max kr8md width: " << KR8MD_MAX_VEC_REGISTER_SIZE << std::endl;
@@ -62,8 +63,8 @@ int main(void)
     auto begin_pak = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < n; i += 8)
     {
-        pfloat pvec_a(&(vec_a[i]));
-        pfloat pvec_b(&(vec_b[i]));
+        pfloat pvec_a = kr8md::load(&vec_a[i]);
+        pfloat pvec_b = kr8md::load(&vec_b[i]);
 
         pfloat pvec_c = pvec_a * pvec_b;
 
@@ -89,8 +90,6 @@ int main(void)
         std::cout << out_pvec_c[i] << " ";
     }
     std::cout << std::endl;
-
-    pfloat tmp = kr8md::load<pfloat>(&vec_a);
 
     return 0;
 }
