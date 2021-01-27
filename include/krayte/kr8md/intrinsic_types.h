@@ -26,13 +26,55 @@ namespace kr8md
     };
 
     template <>
+    struct intrinsic_t<double, 2>
+    {
+        using type = __m128;
+    };
+
+    template <>
+    struct intrinsic_t<int8_t, 16>
+    {
+        using type = __m128i;
+    };
+
+    template <>
+    struct intrinsic_t<uint8_t, 16>
+    {
+        using type = __m128i;
+    };
+
+    template <>
+    struct intrinsic_t<int16_t, 8>
+    {
+        using type = __m128i;
+    };
+
+    template <>
+    struct intrinsic_t<uint16_t, 8>
+    {
+        using type = __m128i;
+    };
+
+    template <>
     struct intrinsic_t<int32_t, 4>
     {
         using type = __m128i;
     };
 
     template <>
+    struct intrinsic_t<uint32_t, 4>
+    {
+        using type = __m128i;
+    };
+
+    template <>
     struct intrinsic_t<int64_t, 2>
+    {
+        using type = __m128i;
+    };
+
+    template <>
+    struct intrinsic_t<uint64_t, 2>
     {
         using type = __m128i;
     };
