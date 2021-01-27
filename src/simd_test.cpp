@@ -29,9 +29,9 @@ int main(void)
     using pfloat = kr8md::Pak<float>;
     using pfloat8 = kr8md::Pak<float, 8>;
 
-    pfloat vec_tmp;
     std::cout << "max kr8md width: " << KR8MD_MAX_VEC_REGISTER_SIZE << std::endl;
-    std::cout << "sizeof(vec_tmp): " << sizeof(vec_tmp) << std::endl;
+    std::cout << "sizeof(pfloat): " << sizeof(pfloat) << std::endl;
+    std::cout << std::endl;
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -74,9 +74,12 @@ int main(void)
     auto duration_pak = std::chrono::duration_cast<std::chrono::nanoseconds>(end_pak - begin_pak).count();
 
     // -------
+    std::cout << "Multiplication of two vectors (size " << n << "): " << duration_normal << std::endl;
     std::cout << "Duration normal: " << duration_normal << std::endl;
     std::cout << "Duration pak: " << duration_pak << std::endl;
+    std::cout << std::endl;
 
+    std::cout << "Visual inspection of correctness: " << std::endl;
     for (int i = 0; i < 20; ++i)
     {
         std::cout << vec_c[i] << " ";
