@@ -3,6 +3,7 @@ build/
 
 # IDE
 *.code-workspace
+.vscode/
 
 *.img
 *.o
