@@ -26,7 +26,7 @@ int main(void)
     using pfloat = kr8md::Pak<float>;
 
     pfloat vec_tmp;
-    std::cout << "max kr8md width: " << MAX_KR8MD_WIDTH << std::endl;
+    std::cout << "max kr8md width: " << KR8MD_MAX_VEC_REGISTER_SIZE << std::endl;
     std::cout << "sizeof(vec_tmp): " << sizeof(vec_tmp) << std::endl;
 
     pfloat vec_a(arr_a);

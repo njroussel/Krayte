@@ -1,31 +1,10 @@
 #pragma once
 
+#include <krayte/kr8md/defaults.h>
 #include <krayte/kr8md/intrinsic_types.h>
-
-#if defined(__AVX2__)
-#define MAX_KR8MD_WIDTH 8
-#elif defined(__SSE4_2__)
-#define MAX_KR8MD_WIDTH 4
-#else
-#define MAX_KR8MD_WIDTH 1
-#endif
-
-template <typename T>
-constexpr size_t max_supported_width_for_type()
-{
-#if defined(__AVX2__)
-    if (std::is_same<int32_t, T>::value)
-    {
-        return 4;
-    }
-#endif
-
-    return MAX_KR8MD_WIDTH;
-}
 
 namespace kr8md
 {
-
     template <typename T, size_t W = max_supported_width_for_type<T>()>
     struct Pak
     {
