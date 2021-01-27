@@ -10,8 +10,8 @@ namespace kr8md
 #ifdef __SSE4_2__
         return _mm_mul_ps(a.intrinsic, b.intrinsic);
 #else
-        pfloat8 out;
-        for (size_t i = 0; i < 4; i++)
+        pfloat4 out;
+        for (size_t i = 0; i < 4; ++i)
         {
             out.data[i] = a.data[i] + b.data[i];
         }
@@ -26,7 +26,7 @@ namespace kr8md
         return _mm256_mul_ps(a.intrinsic, b.intrinsic);
 #else
         pfloat8 out;
-        for (size_t i = 0; i < 8; i++)
+        for (size_t i = 0; i < 8; ++i)
         {
             out.data[i] = a.data[i] + b.data[i];
         }

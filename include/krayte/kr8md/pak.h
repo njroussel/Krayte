@@ -11,6 +11,11 @@ namespace kr8md
     struct Pak
     {
 
+        enum
+        {
+            width = W,
+        };
+
         using intrinsic_t = typename intrinsic_t<T, W>::type;
 
         union
@@ -25,7 +30,7 @@ namespace kr8md
 
         Pak(T *arr)
         {
-            for (size_t i = 0; i < W; i++)
+            for (size_t i = 0; i < W; ++i)
             {
                 data[i] = arr[i];
             }

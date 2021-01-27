@@ -10,7 +10,7 @@
 #define KR8MD_MAX_VEC_REGISTER_SIZE -1
 #endif
 
-#define KR8MD_INLINE inline __attribute__((always_inline)) 
+#define KR8MD_INLINE inline __attribute__((always_inline))
 
 template <typename T>
 constexpr size_t max_supported_width_for_type()

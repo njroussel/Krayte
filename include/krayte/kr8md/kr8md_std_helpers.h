@@ -9,7 +9,7 @@ namespace kr8md
     std::ostream &operator<<(std::ostream &os, const Pak<T, W> &pak)
     {
         os << "{";
-        for (size_t i = 0; i < W; i++)
+        for (size_t i = 0; i < W; ++i)
         {
             os << pak.data[i];
             if (i != W - 1)
