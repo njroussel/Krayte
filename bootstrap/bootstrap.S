@@ -233,8 +233,18 @@ ASM_FUNC_DEF32(bootstrap_main):
     INFO64("Entry point is %q\n")
     pop     rax
 
+    // Map the framebuffer to virtual memory so that it is accessible from the
+    // application.
+    push    rax
+    call    map_framebuffer
+    pop     rax
+
     // Call the entry point of the process.
-    mov     rdi, [putc_vga_buffer_cursor]
+    // Pass a struct containing information about the video-mode/framebuffer.
+    // This struct is a sub-struct of the mode info block starting at offset
+    // 0x10.
+    mov     rdi, [mode_info_block]
+    add     rdi, 0x10
     call    rax
 
     // In case we ever return from the process make sure that we don't

@@ -262,3 +262,59 @@ ASM_FUNC_DEF32(_set_video_mode):
     add     esp, BCP_SIZE
     leave
     ret
+
+// ============================================================================= 
+// Map the VESA frame buffer to the virtual address space. This routine will use
+// ID mapping. This must be called _after_ setting the video mode.
+// ============================================================================= 
+ASM_FUNC_DEF64(map_framebuffer):
+    push    rbp
+    mov     rbp, rsp
+
+    push    rbx
+
+    // RAX = Pointer on mode info.
+    mov     rax, [mode_info_block]
+    // RCX = Size of the framebuffer in bytes.
+    //     = (height - 1) * bytes_per_line + width * (bits_per_pixel/8)
+    movzx   rcx, WORD PTR [rax + MODE_INFO_BLOCK_HEIGHT_OFF]
+    dec     rcx
+    movzx   rdx, WORD PTR [rax + MODE_INFO_BLOCK_BYTE_PER_LINE]
+    imul    rcx, rdx
+    movzx   rdx, WORD PTR [rax + MODE_INFO_BLOCK_WIDTH_OFF]
+    movzx   r12, BYTE PTR [rax + MODE_INFO_BLOCK_BPP]
+    imul    rdx, r12
+    shr     rdx, 3
+    add     rcx, rdx
+
+    // RCX = Size of the frame buffer in number of pages.
+    test    rcx, (PAGE_SIZE - 1)
+    setnz   dl
+    movzx   rdx, dl
+    shr     rcx, 12
+    add     rcx, rdx
+
+    push    rax
+    push    rcx
+    DEBUG64("Framebuffer size = %q pages\n")
+    pop     rcx
+    pop     rax
+    
+    // RBX = Next address to map.
+    mov     ebx, [rax + MODE_INFO_BLOCK_FB_ADDR_OFF]
+map_framebuffer_loop:
+    push    rcx
+    mov     rdi, rbx
+    mov     rsi, rbx
+    mov     rdx, (MAP_WRITE | MAP_WRITE_THROUGH | MAP_CACHE_DISABLE)
+    call    map_frame
+
+    add     rbx, PAGE_SIZE
+    pop     rcx
+    loop    map_framebuffer_loop
+
+    INFO64("Framebuffer mapped to virtual memory\n")
+
+    pop     rbx
+    leave
+    ret
