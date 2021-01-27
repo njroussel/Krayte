@@ -180,6 +180,10 @@ ASM_FUNC_DEF32(bootstrap_main):
     // Copy the ELF file into RAM.
     call    copy_elf_file_to_ram
 
+    // Before leaving 32-bit mode for long mode, initialize the video mode. This
+    // is the last chance we have to do so.
+    call    init_video
+
     // Initialize long mode and jump to it. Warn: This is the point of no
     // return, as for now there is no way to come back from long mode to 32-bit
     // mode. Hence no possible way to interact with the BIOS after that!
