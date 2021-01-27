@@ -1,4 +1,5 @@
 #pragma once
+
 #include <immintrin.h>
 
 namespace kr8md
