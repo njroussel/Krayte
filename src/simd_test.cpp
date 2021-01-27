@@ -68,10 +68,7 @@ int main(void)
 
         pfloat pvec_c = pvec_a * pvec_b;
 
-        for (int j = 0; j < 8; ++j)
-        {
-            out_pvec_c[i + j] = pvec_c.data[j];
-        }
+        kr8md::store(&out_pvec_c[i], pvec_c.intrinsic);
     }
     auto end_pak = std::chrono::high_resolution_clock::now();
     auto duration_pak = std::chrono::duration_cast<std::chrono::nanoseconds>(end_pak - begin_pak).count();

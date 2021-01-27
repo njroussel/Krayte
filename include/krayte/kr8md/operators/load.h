@@ -1,19 +1,18 @@
 #pragma once
 
 #include <krayte/kr8md/pak.h>
-#include <krayte/kr8md/defaults.h>
 
 namespace kr8md
 {
 #if defined(__AVX__)
     KR8MD_INLINE const pfloat8 load(float const *const addr)
     {
-        return _mm256_load_ps(static_cast<const float *>(addr));
+        return _mm256_load_ps(addr);
     }
 #elif defined(__SSE4_2__)
-    KR8MD_INLINE const pfloat4 load(float const  *const addr)
+    KR8MD_INLINE const pfloat4 load(float const *const addr)
     {
-        return _mm_load_ps(static_cast<const float *>(addr));
+        return _mm_load_ps(addr);
     }
 #endif
 } // namespace kr8md
