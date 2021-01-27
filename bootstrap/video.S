@@ -97,7 +97,7 @@ ASM_FUNC_DEF32(_read_vbe_info_block):
     push    ecx
     call    printf32
     push    '\n'
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 8
 
     // Return the address of the copy.

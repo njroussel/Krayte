@@ -130,6 +130,16 @@ putc_vga_buffer_cursor:
 .long   0x0
 
 // ============================================================================= 
+// Call the underlying putc implementation. For now only VGA is available.
+// @param (DWORD) The character to print.
+// ============================================================================= 
+ASM_FUNC_DEF32(_putc32):
+    push    [esp + 4]
+    call    putc_vga_buffer32
+    add     esp, 4
+    ret
+
+// ============================================================================= 
 // Output an hexadecimal value into the VGA buffer at the current cursor
 // position.
 // @param (DWORD) size: The number of bytes of the value.
@@ -143,12 +153,12 @@ ASM_FUNC_DEF32(_printf_output_hex32):
     
     // Put '0'.
     push    0x30
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 4
 
     // Put 'x'.
     push    0x78
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 4
 
     // Since x86 is little-endian, the byte following the "0x" will be the byte
@@ -168,8 +178,8 @@ ASM_FUNC_DEF32(_printf_output_hex32):
 
     // In order to output the correct representation of the byte, we need to do
     // some ASCII math on each half/4bits composing the byte.
-    // The goal here is to make two calls to putc_vga_buffer32 with the correct
-    // digit or letter.
+    // The goal here is to make two calls to _putc32 with the correct digit or
+    // letter.
     // The math is the same for each half, hence we have a small loop that will
     // execute twice, computing the digit/letter and pushing it onto the stack.
     xor     edx, edx
@@ -198,9 +208,9 @@ ASM_FUNC_DEF32(_printf_output_hex32):
     // At this point the stack contains:
     //  SP + 4 -> digit/letter of lower 4 bits of AL.
     //  SP     -> digit/letter of higher 4 bits of AL.
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 4
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 4
     
     // Move to previous byte.
@@ -253,7 +263,7 @@ ASM_FUNC_DEF32(printf32):
 
     // Regular character, simply output it.
     push    eax
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 4
     jmp     3f
 

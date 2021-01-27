@@ -99,6 +99,14 @@ ASM_FUNC_DEF64(putc_vga_buffer64):
     ret
 
 // ============================================================================= 
+// Call the underlying putc implementation. For now only VGA is available.
+// @param (DWORD) The character to print.
+// ============================================================================= 
+ASM_FUNC_DEF64(_putc64):
+    call    putc_vga_buffer64
+    ret
+
+// ============================================================================= 
 // Output an hexadecimal value into the VGA buffer at the current cursor
 // position.
 // @param (RDI) size: The number of bytes of the value.
@@ -114,11 +122,11 @@ ASM_FUNC_DEF64(_printf_output_hex64):
     push    rsi
     // Put '0'.
     mov     rdi, 0x30
-    call    putc_vga_buffer64
+    call    _putc64
 
     // Put 'x'.
     mov     rdi, 0x78
-    call    putc_vga_buffer64
+    call    _putc64
     pop     rsi
     pop     rdi
 
@@ -143,8 +151,8 @@ ASM_FUNC_DEF64(_printf_output_hex64):
 
     // In order to output the correct representation of the byte, we need to do
     // some ASCII math on each half/4bits composing the byte.
-    // The goal here is to make two calls to putc_vga_buffer64 with the correct
-    // digit or letter.
+    // The goal here is to make two calls to _putc64 with the correct digit or
+    // letter.
     // The math is the same for each half, hence we have a small loop that will
     // execute twice, computing the digit/letter and pushing it onto the stack.
     xor     rdx, rdx
@@ -174,9 +182,9 @@ ASM_FUNC_DEF64(_printf_output_hex64):
     //  RSP + 8 -> digit/letter of lower 4 bits of AL.
     //  RSP     -> digit/letter of higher 4 bits of AL.
     pop     rdi
-    call    putc_vga_buffer64
+    call    _putc64
     pop     rdi
-    call    putc_vga_buffer64
+    call    _putc64
     
     // Move to previous byte.
     rol     rbx, 8
@@ -224,7 +232,7 @@ ASM_FUNC_DEF64(printf64):
     // Regular character, simply output it.
     xor     rdi, rdi
     mov     dil, al
-    call    putc_vga_buffer64
+    call    _putc64
     jmp     .printf64_loop_continue
 
 .printf64_loop_subst:

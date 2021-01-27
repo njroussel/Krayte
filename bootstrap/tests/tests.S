@@ -117,7 +117,7 @@ loop:
     add     esp, 4
 
     push    '\n'
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 4
 
     // Move to next entry in test table.

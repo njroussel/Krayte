@@ -429,7 +429,7 @@ ASM_FUNC_DEF32(copy_elf_file_to_ram):
     call    printf32
     add     esp, 4
     push    '\n'
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 4
     push    DWORD PTR [ebx + METADATA_SIZE_OFF]
     INFO32("Size     : %d bytes\n")
