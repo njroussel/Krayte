@@ -1,6 +1,6 @@
 #pragma once
 
-#include <krayte/kr8md/pak_intrinsic_types.h>
+#include <krayte/kr8md/intrinsic_types.h>
 
 #if defined(__AVX2__)
 #define MAX_KR8MD_WIDTH 8
@@ -30,17 +30,17 @@ namespace kr8md
     struct Pak
     {
 
-        using pak_intrinsic_t = typename pak_intrinsic_type<T, W>::type;
+        using intrinsic_t = typename intrinsic_t<T, W>::type;
 
         union
         {
             T data[W];
-            pak_intrinsic_t intrinsic;
+            intrinsic_t intrinsic;
         };
 
         Pak() {}
 
-        Pak(pak_intrinsic_t intrinsinc_) : intrinsic(intrinsinc_) {}
+        Pak(intrinsic_t intrinsinc_) : intrinsic(intrinsinc_) {}
 
         Pak(T *arr)
         {
