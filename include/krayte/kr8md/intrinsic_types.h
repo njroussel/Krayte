@@ -1,3 +1,4 @@
+#pragma once
 
 #if defined(__AVX2__) || defined(__AVX__) || defined(__SSE4_2__)
 #include <immintrin.h>
