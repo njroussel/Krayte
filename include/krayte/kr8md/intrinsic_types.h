@@ -28,7 +28,7 @@ namespace kr8md
     template <>
     struct intrinsic_t<double, 2>
     {
-        using type = __m128;
+        using type = __m128d;
     };
 
     template <>
