@@ -18,6 +18,26 @@ namespace kr8md
         using type = pak_udef_intrinsic_type<T, W>;
     };
 
+#if defined(__SSE4_2__)
+    template <>
+    struct pak_intrinsic_type<float, 4>
+    {
+        using type = __m128;
+    };
+
+    template <>
+    struct pak_intrinsic_type<int32_t, 4>
+    {
+        using type = __m128i;
+    };
+
+    template <>
+    struct pak_intrinsic_type<int64_t, 2>
+    {
+        using type = __m128i;
+    };
+#endif
+
 #if defined(__AVX2__) || defined(__AVX__)
     template <>
     struct pak_intrinsic_type<float, 8>
@@ -26,7 +46,7 @@ namespace kr8md
     };
 
     template <>
-    struct pak_intrinsic_type<int, 8>
+    struct pak_intrinsic_type<int32_t, 8>
     {
         using type = __m256i;
     };
