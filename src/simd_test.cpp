@@ -74,7 +74,7 @@ int main(void)
     auto duration_pak = std::chrono::duration_cast<std::chrono::nanoseconds>(end_pak - begin_pak).count();
 
     // -------
-    std::cout << "Multiplication of two vectors (size " << n << "): " << duration_normal << std::endl;
+    std::cout << "Multiplication of two vectors (size " << n << "):" << std::endl;
     std::cout << "Duration normal: " << duration_normal << std::endl;
     std::cout << "Duration pak: " << duration_pak << std::endl;
     std::cout << std::endl;
