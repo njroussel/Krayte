@@ -61,7 +61,7 @@ int main(void)
 
     float out_pvec_c[n];
     auto begin_pak = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < n; i += 8)
+    for (int i = 0; i < n; i += pfloat::width)
     {
         pfloat pvec_a = kr8md::load(&vec_a[i]);
         pfloat pvec_b = kr8md::load(&vec_b[i]);
