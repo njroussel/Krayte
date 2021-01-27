@@ -174,6 +174,7 @@ ASM_FUNC_DEF32(bootstrap_main):
 
     call    init_mem_map
     call    init_frame_allocator
+    call    init_fpu
 
     // Copy the ELF file into RAM.
     call    copy_elf_file_to_ram
@@ -255,6 +256,63 @@ ASM_FUNC_DEF32(init_cache):
 
     leave
     ret
+
+// ============================================================================= 
+// Initialize the FPU for AVX-2. This routine will make sure that the processor
+// supports this extension and will panic otherwise.
+// ============================================================================= 
+ASM_FUNC_DEF32(init_fpu):
+    push    ebp
+    mov     ebp, esp
+
+    // First check that the cpu supports XSAVE and XRSTOR.
+    mov     eax, 1
+    cpuid
+    test    ecx, (1 << 26)
+    jz      .init_fpu_no_xsave_xrstor
+
+    // XSAVE and XRSTOR supported, Enable XGETBV by setting the CR4.OSXSAVE[bit
+    // 18].
+    mov     eax, cr4
+    or      eax, (1 << 18)
+    mov     cr4, eax
+
+    // Check that the CPU supports AVX-2 (which is what we will be using
+    // in the application):
+    //  - CPUID.1:ECX.OSXSAVE[bit 27] = 1. This was done by setting the OSXSAVE
+    //  bit in CR4.
+    //  - CPUID.1:ECX.AVX[bit 28]. Indicate the support.
+    xor     ecx, ecx
+    mov     eax, 1
+    cpuid
+    and     ecx, ((1 << 27) | (1 << 28))
+    cmp     ecx, ((1 << 27) | (1 << 28))
+    jne     .init_fpu_no_avx
+
+    // AVX-2 is supported. Now set bits 1 and 2 in the XCR0.
+    xor     ecx, ecx
+    xgetbv
+    or      eax, ((1 << 1) | (1 << 2))
+    xsetbv
+
+    // Set the MP and NE bits in CR0.
+    mov     eax, cr0
+    or      eax, ((1 << 1) | (1 << 5))
+    mov     cr0, eax
+
+    // Set bits for SSE in CR4.
+    mov     eax, cr4
+    or      eax, ((1 << 9) | (1 << 10))
+    mov     cr4, eax
+
+    // Init FPU.
+    finit
+
+    leave
+    ret
+.init_fpu_no_xsave_xrstor:
+.init_fpu_no_avx:
+    PANIC32("Processor does not support AVX-2 extension.\n")
 
 // ============================================================================= 
 // Read a sector from the boot disk.
