@@ -160,6 +160,7 @@ ASM_FUNC_DEF32(call_real_mode):
 // Does not return.
 // ============================================================================= 
 ASM_FUNC_DEF32(bootstrap_main):
+    call    init_serial
     call    init_cache
     call    clear_vga_buffer32
 

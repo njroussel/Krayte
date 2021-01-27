@@ -103,7 +103,7 @@ ASM_FUNC_DEF64(putc_vga_buffer64):
 // @param (DWORD) The character to print.
 // ============================================================================= 
 ASM_FUNC_DEF64(_putc64):
-    call    putc_vga_buffer64
+    call    putc_serial64
     ret
 
 // ============================================================================= 

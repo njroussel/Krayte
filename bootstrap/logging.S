@@ -135,7 +135,7 @@ putc_vga_buffer_cursor:
 // ============================================================================= 
 ASM_FUNC_DEF32(_putc32):
     push    [esp + 4]
-    call    putc_vga_buffer32
+    call    putc_serial32
     add     esp, 4
     ret
 
