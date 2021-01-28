@@ -7,12 +7,36 @@ namespace kr8md
 #if defined(__AVX__)
     KR8MD_INLINE const void store(float *const addr, const __m256 a)
     {
-        return _mm256_store_ps(addr, a);
+        return _mm256_storeu_ps(addr, a);
     }
 #elif defined(__SSE4_2__)
     KR8MD_INLINE const void store(float *const addr, const __m128 a)
     {
+        return _mm_storeu_ps(addr, a);
+    }
+#endif
+
+#if defined(__AVX__)
+    KR8MD_INLINE const void store_aligned(float *const addr, const __m256 a)
+    {
+        return _mm256_store_ps(addr, a);
+    }
+#elif defined(__SSE4_2__)
+    KR8MD_INLINE const void store_aligned(float *const addr, const __m128 a)
+    {
         return _mm_store_ps(addr, a);
+    }
+#endif
+
+#if defined(__AVX__)
+    KR8MD_INLINE const void store_unaligned(float *const addr, const __m256 a)
+    {
+        return _mm256_storeu_ps(addr, a);
+    }
+#elif defined(__SSE4_2__)
+    KR8MD_INLINE const void store_unaligned(float *const addr, const __m128 a)
+    {
+        return _mm_storeu_ps(addr, a);
     }
 #endif
 } // namespace kr8md
