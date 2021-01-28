@@ -6,3 +6,4 @@
 #include <krayte/kr8md/operators/load.h>
 #include <krayte/kr8md/operators/multiplication.h>
 #include <krayte/kr8md/operators/store.h>
+#include <krayte/kr8md/operators/subtraction.h>
