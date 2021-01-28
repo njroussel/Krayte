@@ -38,6 +38,8 @@ int main(void)
     std::uniform_int_distribution<> distrib(1, 100);
 
     size_t n = 80000;
+    assert(n % 8 == 0);
+
     float vec_a[n];
     float vec_b[n];
     float vec_c[n];
@@ -55,6 +57,10 @@ int main(void)
     for (int i = 0; i < n; ++i)
     {
         vec_c[i] = vec_a[i] * vec_b[i];
+        if (vec_a[i] > vec_b[i])
+        {
+            vec_c[i] = vec_a[i] * vec_a[i];
+        }
     }
     auto end_normal = std::chrono::high_resolution_clock::now();
     auto duration_normal = std::chrono::duration_cast<std::chrono::nanoseconds>(end_normal - begin_normal).count();
@@ -67,29 +73,28 @@ int main(void)
         pfloat pvec_b = kr8md::load(&vec_b[i]);
 
         pfloat pvec_c = pvec_a * pvec_b;
+        kr8md::masked(pvec_c, pvec_a > pvec_b) = pvec_a * pvec_a;
 
         kr8md::store(&out_pvec_c[i], pvec_c.intrinsic);
     }
     auto end_pak = std::chrono::high_resolution_clock::now();
     auto duration_pak = std::chrono::duration_cast<std::chrono::nanoseconds>(end_pak - begin_pak).count();
 
+    bool correct = true;
+    for (int i = 0; i < n; i++)
+    {
+        if (vec_c[i] != out_pvec_c[i])
+        {
+            correct = false;
+            break;
+        }
+    }
+
     // -------
     std::cout << "Multiplication of two vectors (size " << n << "):" << std::endl;
     std::cout << "Duration normal: " << duration_normal << std::endl;
     std::cout << "Duration pak: " << duration_pak << std::endl;
-    std::cout << std::endl;
-
-    std::cout << "Visual inspection of correctness: " << std::endl;
-    for (int i = 0; i < 20; ++i)
-    {
-        std::cout << vec_c[i] << " ";
-    }
-    std::cout << std::endl;
-    for (int i = 0; i < 20; ++i)
-    {
-        std::cout << out_pvec_c[i] << " ";
-    }
-    std::cout << std::endl;
+    std::cout << "Correctness: " << correct << std::endl;
 
     return 0;
 }
