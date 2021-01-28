@@ -4,7 +4,7 @@
 
 namespace kr8md
 {
-#if defined(__AVX__)
+#if defined(__AVX2__)
     KR8MD_INLINE const pfloat8 load(float const *const addr)
     {
         return _mm256_loadu_ps(addr);
@@ -16,7 +16,7 @@ namespace kr8md
     }
 #endif
 
-#if defined(__AVX__)
+#if defined(__AVX2__)
     KR8MD_INLINE const pfloat8 load_aligned(float const *const addr)
     {
         return _mm256_load_ps(addr);
@@ -28,7 +28,7 @@ namespace kr8md
     }
 #endif
 
-#if defined(__AVX__)
+#if defined(__AVX2__)
     KR8MD_INLINE const pfloat8 load_unaligned(float const *const addr)
     {
         return _mm256_loadu_ps(addr);

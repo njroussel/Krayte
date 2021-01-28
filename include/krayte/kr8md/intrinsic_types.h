@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(__AVX2__) || defined(__AVX__) || defined(__SSE4_2__)
+#if defined(__AVX2__) || defined(__SSE4_2__)
 #include <immintrin.h>
 #endif
 
@@ -80,7 +80,7 @@ namespace kr8md
     };
 #endif
 
-#if defined(__AVX2__) || defined(__AVX__)
+#ifdef __AVX2__
     template <>
     struct intrinsic_t<float, 8>
     {
