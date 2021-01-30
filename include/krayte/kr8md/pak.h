@@ -36,6 +36,16 @@ namespace kr8md
                 data[i] = arr[i];
             }
         }
+
+        KR8MD_INLINE operator const intrinsic_t &() const
+        {
+            return intrinsic;
+        }
+
+        KR8MD_INLINE operator intrinsic_t &()
+        {
+            return intrinsic;
+        }
     };
 
     template <typename TPak>

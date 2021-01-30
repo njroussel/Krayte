@@ -9,14 +9,14 @@ namespace kr8md
 #ifdef __SSE4_2__
     KR8MD_INLINE pfloat4 operator<(const pfloat4 &a, const pfloat4 &b)
     {
-        return _mm_cmplt_ps(a.intrinsic, b.intrinsic);
+        return _mm_cmplt_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
     KR8MD_INLINE pfloat8 operator<(const pfloat8 &a, const pfloat8 &b)
     {
-        return _mm256_cmp_ps(a.intrinsic, b.intrinsic, _CMP_LT_OQ);
+        return _mm256_cmp_ps(a, b, _CMP_LT_OQ);
     }
 #endif
 
@@ -25,14 +25,14 @@ namespace kr8md
 #ifdef __SSE4_2__
     KR8MD_INLINE pfloat4 operator>(const pfloat4 &a, const pfloat4 &b)
     {
-        return _mm_cmpgt_ps(a.intrinsic, b.intrinsic);
+        return _mm_cmpgt_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
     KR8MD_INLINE pfloat8 operator>(const pfloat8 &a, const pfloat8 &b)
     {
-        return _mm256_cmp_ps(a.intrinsic, b.intrinsic, _CMP_GT_OQ);
+        return _mm256_cmp_ps(a, b, _CMP_GT_OQ);
     }
 #endif
 
@@ -41,14 +41,14 @@ namespace kr8md
 #ifdef __SSE4_2__
     KR8MD_INLINE pfloat4 operator<=(const pfloat4 &a, const pfloat4 &b)
     {
-        return _mm_cmple_ps(a.intrinsic, b.intrinsic);
+        return _mm_cmple_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
     KR8MD_INLINE pfloat8 operator<=(const pfloat8 &a, const pfloat8 &b)
     {
-        return _mm256_cmp_ps(a.intrinsic, b.intrinsic, _CMP_LE_OQ);
+        return _mm256_cmp_ps(a, b, _CMP_LE_OQ);
     }
 #endif
 
@@ -57,14 +57,14 @@ namespace kr8md
 #ifdef __SSE4_2__
     KR8MD_INLINE pfloat4 operator>=(const pfloat4 &a, const pfloat4 &b)
     {
-        return _mm_cmpge_ps(a.intrinsic, b.intrinsic);
+        return _mm_cmpge_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
     KR8MD_INLINE pfloat8 operator>=(const pfloat8 &a, const pfloat8 &b)
     {
-        return _mm256_cmp_ps(a.intrinsic, b.intrinsic, _CMP_GE_OQ);
+        return _mm256_cmp_ps(a, b, _CMP_GE_OQ);
     }
 #endif
 
@@ -73,14 +73,14 @@ namespace kr8md
 #ifdef __SSE4_2__
     KR8MD_INLINE pfloat4 operator==(const pfloat4 &a, const pfloat4 &b)
     {
-        return _mm_cmpeq_ps(a.intrinsic, b.intrinsic);
+        return _mm_cmpeq_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
     KR8MD_INLINE pfloat8 operator==(const pfloat8 &a, const pfloat8 &b)
     {
-        return _mm256_cmp_ps(a.intrinsic, b.intrinsic, _CMP_EQ_OQ);
+        return _mm256_cmp_ps(a, b, _CMP_EQ_OQ);
     }
 #endif
 
@@ -89,14 +89,14 @@ namespace kr8md
 #ifdef __SSE4_2__
     KR8MD_INLINE pfloat4 operator!=(const pfloat4 &a, const pfloat4 &b)
     {
-        return _mm_cmpneq_ps(a.intrinsic, b.intrinsic);
+        return _mm_cmpneq_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
     KR8MD_INLINE pfloat8 operator!=(const pfloat8 &a, const pfloat8 &b)
     {
-        return _mm256_cmp_ps(a.intrinsic, b.intrinsic, _CMP_NEQ_OQ);
+        return _mm256_cmp_ps(a, b, _CMP_NEQ_OQ);
     }
 #endif
 } // namespace kr8md
