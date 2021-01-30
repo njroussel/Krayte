@@ -52,13 +52,9 @@ void loop_paked(size_t n, float const *const a, float const *const b, float *con
 int main(void)
 {
 
-    std::cout << "max kr8md width: " << KR8MD_MAX_VEC_REGISTER_SIZE << std::endl;
-    std::cout << "sizeof(pfloat): " << sizeof(pfloat) << std::endl;
-    std::cout << std::endl;
-
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(1, 100);
+    std::uniform_int_distribution<> distribution(1, 100);
 
     size_t n = 80000000;
     assert(n % 8 == 0);
@@ -66,14 +62,8 @@ int main(void)
     float *vec_a = new float[n];
     float *vec_b = new float[n];
 
-    for (int i = 0; i < n; ++i)
-    {
-        vec_a[i] = distrib(gen);
-    }
-    for (int i = 0; i < n; ++i)
-    {
-        vec_b[i] = distrib(gen);
-    }
+    std::transform(&vec_a[0], &vec_a[n], &vec_a[0], [&](auto _) { return distribution(gen); });
+    std::transform(&vec_b[0], &vec_b[n], &vec_b[0], [&](auto _) { return distribution(gen); });
 
     float *vec_c = new float[n];
     float *pvec_c = new float[n];
@@ -84,6 +74,10 @@ int main(void)
     bool correct = std::equal(&vec_c[0], &vec_c[n], &pvec_c[0]);
 
     // -------
+    std::cout << "max kr8md width: " << KR8MD_MAX_VEC_REGISTER_SIZE << std::endl;
+    std::cout << "sizeof(pfloat): " << sizeof(pfloat) << std::endl;
+    std::cout << std::endl;
+
     std::cout << "Multiplication of two vectors (size " << n << "):" << std::endl;
     std::cout << "Duration normal: " << duration_normal << std::endl;
     std::cout << "Duration pak: " << duration_pak << std::endl;
