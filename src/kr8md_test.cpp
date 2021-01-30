@@ -40,7 +40,7 @@ void loop_paked(size_t n, float const *const a, float const *const b, float *con
         pfloat pc = pa * pb;
 
         pfloat condition = pa > pb;
-        if (any(condition))
+        if (any(condition)) // Early exit
         {
             masked(pc, condition) = pa * pa;
         }
@@ -78,7 +78,7 @@ int main(void)
     std::cout << "sizeof(pfloat): " << sizeof(pfloat) << std::endl;
     std::cout << std::endl;
 
-    std::cout << "Multiplication of two vectors (size " << n << "):" << std::endl;
+    std::cout << "Basic arithmetic on two vectors (size " << n << "):" << std::endl;
     std::cout << "Duration normal: " << duration_normal << std::endl;
     std::cout << "Duration pak: " << duration_pak << std::endl;
     std::cout << "Correctness: " << correct << std::endl;
