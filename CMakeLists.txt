@@ -47,8 +47,8 @@ include_directories(
 #    src/main.cpp
 #    )
 
-add_executable(simd_test
+add_executable(kr8md_test
     # Header files
     # Source files
-    src/simd_test.cpp
+    src/kr8md_test.cpp
     )
