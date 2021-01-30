@@ -72,6 +72,9 @@ namespace kr8md
         return MaskedPak<TPak>(pak, mask);
     }
 
+    using pfloat = kr8md::Pak<float>;
+    using pdouble = kr8md::Pak<double>;
+
     template <size_t W>
     using pdoublen = Pak<double, W>;
     template <size_t W>
