@@ -38,7 +38,12 @@ void loop_paked(size_t n, float const *const a, float const *const b, float *con
         pfloat pb = load(&b[i]);
 
         pfloat pc = pa * pb;
-        masked(pc, pa > pb) = pa * pa;
+
+        pfloat condition = pa > pb;
+        if (any(condition))
+        {
+            masked(pc, condition) = pa * pa;
+        }
 
         store(&dst[i], pc);
     }
