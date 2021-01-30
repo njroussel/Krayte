@@ -160,6 +160,7 @@ ASM_FUNC_DEF32(call_real_mode):
 // Does not return.
 // ============================================================================= 
 ASM_FUNC_DEF32(bootstrap_main):
+    call    init_serial
     call    init_cache
     call    clear_vga_buffer32
 
@@ -174,9 +175,14 @@ ASM_FUNC_DEF32(bootstrap_main):
 
     call    init_mem_map
     call    init_frame_allocator
+    call    init_fpu
 
     // Copy the ELF file into RAM.
     call    copy_elf_file_to_ram
+
+    // Before leaving 32-bit mode for long mode, initialize the video mode. This
+    // is the last chance we have to do so.
+    call    init_video
 
     // Initialize long mode and jump to it. Warn: This is the point of no
     // return, as for now there is no way to come back from long mode to 32-bit
@@ -227,8 +233,18 @@ ASM_FUNC_DEF32(bootstrap_main):
     INFO64("Entry point is %q\n")
     pop     rax
 
+    // Map the framebuffer to virtual memory so that it is accessible from the
+    // application.
+    push    rax
+    call    map_framebuffer
+    pop     rax
+
     // Call the entry point of the process.
-    mov     rdi, [putc_vga_buffer_cursor]
+    // Pass a struct containing information about the video-mode/framebuffer.
+    // This struct is a sub-struct of the mode info block starting at offset
+    // 0x10.
+    mov     rdi, [mode_info_block]
+    add     rdi, 0x10
     call    rax
 
     // In case we ever return from the process make sure that we don't
@@ -255,6 +271,63 @@ ASM_FUNC_DEF32(init_cache):
 
     leave
     ret
+
+// ============================================================================= 
+// Initialize the FPU for AVX-2. This routine will make sure that the processor
+// supports this extension and will panic otherwise.
+// ============================================================================= 
+ASM_FUNC_DEF32(init_fpu):
+    push    ebp
+    mov     ebp, esp
+
+    // First check that the cpu supports XSAVE and XRSTOR.
+    mov     eax, 1
+    cpuid
+    test    ecx, (1 << 26)
+    jz      .init_fpu_no_xsave_xrstor
+
+    // XSAVE and XRSTOR supported, Enable XGETBV by setting the CR4.OSXSAVE[bit
+    // 18].
+    mov     eax, cr4
+    or      eax, (1 << 18)
+    mov     cr4, eax
+
+    // Check that the CPU supports AVX-2 (which is what we will be using
+    // in the application):
+    //  - CPUID.1:ECX.OSXSAVE[bit 27] = 1. This was done by setting the OSXSAVE
+    //  bit in CR4.
+    //  - CPUID.1:ECX.AVX[bit 28]. Indicate the support.
+    xor     ecx, ecx
+    mov     eax, 1
+    cpuid
+    and     ecx, ((1 << 27) | (1 << 28))
+    cmp     ecx, ((1 << 27) | (1 << 28))
+    jne     .init_fpu_no_avx
+
+    // AVX-2 is supported. Now set bits 1 and 2 in the XCR0.
+    xor     ecx, ecx
+    xgetbv
+    or      eax, ((1 << 1) | (1 << 2))
+    xsetbv
+
+    // Set the MP and NE bits in CR0.
+    mov     eax, cr0
+    or      eax, ((1 << 1) | (1 << 5))
+    mov     cr0, eax
+
+    // Set bits for SSE in CR4.
+    mov     eax, cr4
+    or      eax, ((1 << 9) | (1 << 10))
+    mov     cr4, eax
+
+    // Init FPU.
+    finit
+
+    leave
+    ret
+.init_fpu_no_xsave_xrstor:
+.init_fpu_no_avx:
+    PANIC32("Processor does not support AVX-2 extension.\n")
 
 // ============================================================================= 
 // Read a sector from the boot disk.
@@ -371,7 +444,7 @@ ASM_FUNC_DEF32(copy_elf_file_to_ram):
     call    printf32
     add     esp, 4
     push    '\n'
-    call    putc_vga_buffer32
+    call    _putc32
     add     esp, 4
     push    DWORD PTR [ebx + METADATA_SIZE_OFF]
     INFO32("Size     : %d bytes\n")
@@ -396,7 +469,11 @@ ASM_FUNC_DEF32(copy_elf_file_to_ram):
     // Allocate the physical frames to load the file into.
     push    ecx
     // EAX = Start address where to copy the file.
-    call    allocate_contiguous_frames32
+    call    allocate_n_frames32
+    cmp     eax, NO_FRAME
+    jne     0f
+    PANIC32("copy_elf_file_to_ram: Could not allocate enough contiguous frames")
+0:
     add     esp, 4
     // Save file start addr.
     mov     [file_start_addr], eax

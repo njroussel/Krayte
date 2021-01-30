@@ -28,12 +28,12 @@ QEMU_FLAGS=-s -m 1024 -no-reboot -no-shutdown
 # Run Qemu with the disk image. The GDB server is started as well but Qemu does
 # not wait to start the execution.
 run: disk.img
-	qemu-system-x86_64 -drive file=$<,format=raw $(QEMU_FLAGS)
+	qemu-system-x86_64 -drive file=$<,format=raw $(QEMU_FLAGS) -enable-kvm -cpu host
 
 # Run Qemu with the disk image. The GDB server is started as well and Qemu WAITs
 # for a continue command from a GDB session before starting execution.
 runs: disk.img
-	qemu-system-x86_64 -drive file=$<,format=raw -S $(QEMU_FLAGS)
+	qemu-system-x86_64 -drive file=$<,format=raw -S $(QEMU_FLAGS) -enable-kvm -cpu host
 
 # Clean recursively.
 .PHONY: clean

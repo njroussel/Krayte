@@ -48,10 +48,15 @@ ASM_FUNC_DEF32(init_long_mode):
 
     mov     ecx, 4
     // Allocate the tables.
-0:
+.init_long_mode_alloc_loop:
     push    ecx
 
     call    allocate_frame32
+    cmp     eax, NO_FRAME
+    jne     0f
+    PANIC32("init_long_mode: Could not allocate page table structure\n")
+0:
+
     // EDX = Address of frame.
     mov     edx, eax
 
@@ -66,7 +71,7 @@ ASM_FUNC_DEF32(init_long_mode):
     
     // Push the frame address into the local vars.
     push    edx
-    loop    0b
+    loop    .init_long_mode_alloc_loop
 
     // Store the address of the PML4.
     mov     eax, [ebp - 0x4]
