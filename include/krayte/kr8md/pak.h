@@ -60,9 +60,9 @@ namespace kr8md
 
         MaskedPak(TPak &pak_, const TPak &mask_) : pak(pak_), mask(mask_) {}
 
-        KR8MD_INLINE void operator=(const TPak &pak_)
+        KR8MD_INLINE void operator=(const TPak &rhs)
         {
-            store(&(pak.data[0]), pak_.intrinsic, mask.intrinsic);
+            pak = select(mask, pak, rhs);
         }
     };
 

@@ -37,12 +37,12 @@ int main(void)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(1, 100);
 
-    size_t n = 80000;
+    size_t n = 80000000;
     assert(n % 8 == 0);
 
-    float vec_a[n];
-    float vec_b[n];
-    float vec_c[n];
+    float *vec_a = new float[n];
+    float *vec_b = new float[n];
+    float *vec_c = new float[n];
 
     for (int i = 0; i < n; ++i)
     {
@@ -65,7 +65,7 @@ int main(void)
     auto end_normal = std::chrono::high_resolution_clock::now();
     auto duration_normal = std::chrono::duration_cast<std::chrono::nanoseconds>(end_normal - begin_normal).count();
 
-    float out_pvec_c[n];
+    float *out_pvec_c = new float[n];
     auto begin_pak = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < n; i += pfloat::width)
     {
@@ -75,7 +75,7 @@ int main(void)
         pfloat pvec_c = pvec_a * pvec_b;
         kr8md::masked(pvec_c, pvec_a > pvec_b) = pvec_a * pvec_a;
 
-        kr8md::store(&out_pvec_c[i], pvec_c.intrinsic);
+        kr8md::store(&out_pvec_c[i], pvec_c);
     }
     auto end_pak = std::chrono::high_resolution_clock::now();
     auto duration_pak = std::chrono::duration_cast<std::chrono::nanoseconds>(end_pak - begin_pak).count();
