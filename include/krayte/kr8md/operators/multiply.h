@@ -15,7 +15,7 @@ namespace kr8md
 #ifdef __AVX2__
     KR8MD_INLINE pfloat8 operator*(const pfloat8 &a, const pfloat8 &b)
     {
-        return _mm256_mul_ps(a,);
+        return _mm256_mul_ps(a, b);
     }
 #endif
 } // namespace kr8md
