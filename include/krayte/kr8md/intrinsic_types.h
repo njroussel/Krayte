@@ -18,19 +18,7 @@ namespace kr8md
         using type = no_intrinsic_t<T, W>;
     };
 
-#if defined(__SSE4_2__)
-    template <>
-    struct intrinsic_t<float, 4>
-    {
-        using type = __m128;
-    };
-
-    template <>
-    struct intrinsic_t<double, 2>
-    {
-        using type = __m128d;
-    };
-
+#ifdef __SSE4_2__
     template <>
     struct intrinsic_t<int8_t, 16>
     {
@@ -78,21 +66,22 @@ namespace kr8md
     {
         using type = __m128i;
     };
+
+    template <>
+    struct intrinsic_t<float, 4>
+    {
+        using type = __m128;
+    };
+
+    template <>
+    struct intrinsic_t<double, 2>
+    {
+        using type = __m128d;
+    };
+
 #endif
 
 #ifdef __AVX2__
-    template <>
-    struct intrinsic_t<float, 8>
-    {
-        using type = __m256;
-    };
-
-    template <>
-    struct intrinsic_t<double, 4>
-    {
-        using type = __m256d;
-    };
-
     template <>
     struct intrinsic_t<int8_t, 32>
     {
@@ -140,5 +129,18 @@ namespace kr8md
     {
         using type = __m256i;
     };
+
+    template <>
+    struct intrinsic_t<float, 8>
+    {
+        using type = __m256;
+    };
+
+    template <>
+    struct intrinsic_t<double, 4>
+    {
+        using type = __m256d;
+    };
+
 #endif
 } // namespace kr8md

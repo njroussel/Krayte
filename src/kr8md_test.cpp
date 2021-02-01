@@ -39,7 +39,7 @@ void loop_paked(size_t n, float const *const a, float const *const b, float *con
 
         pfloat pc = pa * pb;
 
-        pfloat condition = pa > pb;
+        pbool32 condition = pa > pb;
         if (any(condition)) // Early exit
         {
             masked(pc, condition) = pa * pa;

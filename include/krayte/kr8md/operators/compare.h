@@ -7,14 +7,14 @@ namespace kr8md
     // less-than <
 
 #ifdef __SSE4_2__
-    KR8MD_INLINE pfloat_4 operator<(const pfloat_4 &a, const pfloat_4 &b)
+    KR8MD_INLINE pbool32_4 operator<(const pfloat_4 &a, const pfloat_4 &b)
     {
         return _mm_cmplt_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
-    KR8MD_INLINE pfloat_8 operator<(const pfloat_8 &a, const pfloat_8 &b)
+    KR8MD_INLINE pbool32_8 operator<(const pfloat_8 &a, const pfloat_8 &b)
     {
         return _mm256_cmp_ps(a, b, _CMP_LT_OQ);
     }
@@ -23,14 +23,14 @@ namespace kr8md
     // greater-than >
 
 #ifdef __SSE4_2__
-    KR8MD_INLINE pfloat_4 operator>(const pfloat_4 &a, const pfloat_4 &b)
+    KR8MD_INLINE pbool32_4 operator>(const pfloat_4 &a, const pfloat_4 &b)
     {
         return _mm_cmpgt_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
-    KR8MD_INLINE pfloat_8 operator>(const pfloat_8 &a, const pfloat_8 &b)
+    KR8MD_INLINE pbool32_8 operator>(const pfloat_8 &a, const pfloat_8 &b)
     {
         return _mm256_cmp_ps(a, b, _CMP_GT_OQ);
     }
@@ -39,14 +39,14 @@ namespace kr8md
     // less-than-or-equal <=
 
 #ifdef __SSE4_2__
-    KR8MD_INLINE pfloat_4 operator<=(const pfloat_4 &a, const pfloat_4 &b)
+    KR8MD_INLINE pbool32_4 operator<=(const pfloat_4 &a, const pfloat_4 &b)
     {
         return _mm_cmple_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
-    KR8MD_INLINE pfloat_8 operator<=(const pfloat_8 &a, const pfloat_8 &b)
+    KR8MD_INLINE pbool32_8 operator<=(const pfloat_8 &a, const pfloat_8 &b)
     {
         return _mm256_cmp_ps(a, b, _CMP_LE_OQ);
     }
@@ -55,14 +55,14 @@ namespace kr8md
     // greater-than-or-equal <=
 
 #ifdef __SSE4_2__
-    KR8MD_INLINE pfloat_4 operator>=(const pfloat_4 &a, const pfloat_4 &b)
+    KR8MD_INLINE pbool32_4 operator>=(const pfloat_4 &a, const pfloat_4 &b)
     {
         return _mm_cmpge_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
-    KR8MD_INLINE pfloat_8 operator>=(const pfloat_8 &a, const pfloat_8 &b)
+    KR8MD_INLINE pbool32_8 operator>=(const pfloat_8 &a, const pfloat_8 &b)
     {
         return _mm256_cmp_ps(a, b, _CMP_GE_OQ);
     }
@@ -71,14 +71,14 @@ namespace kr8md
     // equal ==
 
 #ifdef __SSE4_2__
-    KR8MD_INLINE pfloat_4 operator==(const pfloat_4 &a, const pfloat_4 &b)
+    KR8MD_INLINE pbool32_4 operator==(const pfloat_4 &a, const pfloat_4 &b)
     {
         return _mm_cmpeq_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
-    KR8MD_INLINE pfloat_8 operator==(const pfloat_8 &a, const pfloat_8 &b)
+    KR8MD_INLINE pbool32_8 operator==(const pfloat_8 &a, const pfloat_8 &b)
     {
         return _mm256_cmp_ps(a, b, _CMP_EQ_OQ);
     }
@@ -87,14 +87,14 @@ namespace kr8md
     // not-equal !=
 
 #ifdef __SSE4_2__
-    KR8MD_INLINE pfloat_4 operator!=(const pfloat_4 &a, const pfloat_4 &b)
+    KR8MD_INLINE pbool32_4 operator!=(const pfloat_4 &a, const pfloat_4 &b)
     {
         return _mm_cmpneq_ps(a, b);
     }
 #endif
 
 #ifdef __AVX2__
-    KR8MD_INLINE pfloat_8 operator!=(const pfloat_8 &a, const pfloat_8 &b)
+    KR8MD_INLINE pbool32_8 operator!=(const pfloat_8 &a, const pfloat_8 &b)
     {
         return _mm256_cmp_ps(a, b, _CMP_NEQ_OQ);
     }
