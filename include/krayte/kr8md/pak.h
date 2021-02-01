@@ -69,6 +69,9 @@ namespace kr8md
         {
             return intrinsic_cast;
         }
+
+        Pak<T, W> &operator++();
+        Pak<T, W> operator++(int);
     };
 
     template <typename T, size_t W>

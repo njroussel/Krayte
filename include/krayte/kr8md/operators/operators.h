@@ -12,6 +12,7 @@
 #include <krayte/kr8md/operators/any.h>
 #include <krayte/kr8md/operators/compare.h>
 #include <krayte/kr8md/operators/divide.h>
+#include <krayte/kr8md/operators/increment.h>
 #include <krayte/kr8md/operators/load.h>
 #include <krayte/kr8md/operators/multiply.h>
 #include <krayte/kr8md/operators/select.h>

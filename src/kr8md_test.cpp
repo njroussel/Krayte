@@ -90,9 +90,11 @@ int mandelbrot_pak(pfloat c_re, pfloat c_im, unsigned int max_iterations)
 {
     pfloat z_re = c_re, z_im = c_im;
     pbool32 active;
+    pfloat i;
+    pfloat pmax_iterations;
+    ++i;
     /*
-    pint32 i;
-    for (i = 0; i < max_iterations; ++i)
+    for (i = 0.0f; i < pmax_iterations; ++i)
     {
         if (z_re * z_re + z_im * z_im > 4.)
             break;
