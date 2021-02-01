@@ -89,8 +89,9 @@ void mandelbrot_loop_normal(int *dst, int width = 1080, int height = 720,
 int mandelbrot_pak(pfloat c_re, pfloat c_im, unsigned int max_iterations)
 {
     pfloat z_re = c_re, z_im = c_im;
+    pbool32 active;
     /*
-    pint i;
+    pint32 i;
     for (i = 0; i < max_iterations; ++i)
     {
         if (z_re * z_re + z_im * z_im > 4.)
@@ -102,7 +103,6 @@ int mandelbrot_pak(pfloat c_re, pfloat c_im, unsigned int max_iterations)
         z_re = c_re + new_re;
         z_im = c_im + new_im;
     }
-
     return i;
     */
 

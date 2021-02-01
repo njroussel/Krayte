@@ -80,23 +80,25 @@ namespace kr8md
         return MaskedPak<TPak>(pak, mask);
     }
 
+    using pbool32 = Pak<uint32_t>;
+    using pint32 = Pak<int32_t>;
     using pfloat = Pak<float>;
     using pdouble = Pak<double>;
-    using pint32 = Pak<int32_t>;
 
     template <size_t W>
-    using pdoublen = Pak<double, W>;
+    using pbool32_n = Pak<uint32_t, W>;
     template <size_t W>
-    using pfloatn = Pak<float, W>;
+    using pint32_n = Pak<int32_t, W>;
     template <size_t W>
-    using pint32n = Pak<int32_t, W>;
+    using pfloat_n = Pak<float, W>;
     template <size_t W>
-    using pbooln = Pak<bool, W>;
+    using pdouble_n = Pak<double, W>;
 
-    using pfloat_4 = pfloatn<4>;
-    using pint32_4 = pint32n<4>;
-    using pdouble_4 = pdoublen<4>;
+    using pbool32_4 = pbool32_n<4>;
+    using pint32_4 = pint32_n<4>;
+    using pfloat_4 = pfloat_n<4>;
 
-    using pfloat_8 = pfloatn<8>;
-    using pint32_8 = pint32n<8>;
+    using pbool32_8 = pbool32_n<8>;
+    using pint32_8 = pint32_n<8>;
+    using pfloat_8 = pfloat_n<8>;
 } // namespace kr8md
