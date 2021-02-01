@@ -27,13 +27,21 @@ namespace kr8md
 
         Pak() {}
 
-        Pak(intrinsic_t intrinsinc_) : intrinsic(intrinsinc_) {}
+        Pak(const intrinsic_t intrinsinc_) : intrinsic(intrinsinc_) {}
 
-        Pak(T *arr)
+        Pak(T const *const arr)
         {
             for (size_t i = 0; i < W; ++i)
             {
                 data[i] = arr[i];
+            }
+        }
+
+        Pak(const T val)
+        {
+            for (size_t i = 0; i < W; ++i)
+            {
+                data[i] = val;
             }
         }
 
@@ -72,21 +80,23 @@ namespace kr8md
         return MaskedPak<TPak>(pak, mask);
     }
 
-    using pfloat = kr8md::Pak<float>;
-    using pdouble = kr8md::Pak<double>;
+    using pfloat = Pak<float>;
+    using pdouble = Pak<double>;
+    using pint32 = Pak<int32_t>;
 
     template <size_t W>
     using pdoublen = Pak<double, W>;
     template <size_t W>
     using pfloatn = Pak<float, W>;
     template <size_t W>
-    using pintn = Pak<int, W>;
+    using pint32n = Pak<int32_t, W>;
     template <size_t W>
     using pbooln = Pak<bool, W>;
 
-    using pfloat4 = pfloatn<4>;
-    using pint4 = pintn<4>;
-    using pdouble4 = pdoublen<4>;
+    using pfloat_4 = pfloatn<4>;
+    using pint32_4 = pint32n<4>;
+    using pdouble_4 = pdoublen<4>;
 
-    using pfloat8 = pfloatn<8>;
+    using pfloat_8 = pfloatn<8>;
+    using pint32_8 = pint32n<8>;
 } // namespace kr8md

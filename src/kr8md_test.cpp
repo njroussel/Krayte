@@ -49,6 +49,86 @@ void loop_paked(size_t n, float const *const a, float const *const b, float *con
     }
 }
 
+int mandelbrot_normal(float c_re, float c_im, unsigned int max_iterations)
+{
+    float z_re = c_re, z_im = c_im;
+    int i = 0;
+    for (i = 0; i < max_iterations; ++i)
+    {
+        if (z_re * z_re + z_im * z_im > 4.)
+            break;
+        float new_re = z_re * z_re - z_im * z_im;
+        float new_im = 2.f * z_re * z_im;
+        z_re = c_re + new_re;
+        z_im = c_im + new_im;
+    }
+
+    return i;
+}
+
+void mandelbrot_loop_normal(int *dst, int width = 1080, int height = 720,
+                            double cxmin = -2, double cxmax = 1, double cymin = -1, double cymax = 1,
+                            unsigned int max_iterations = 256)
+{
+    float dx = (cxmax - cxmin) / width;
+    float dy = (cymax - cymin) / height;
+
+    for (size_t i = 0; i < height; ++i)
+    {
+        for (size_t j = 0; j < width; ++j)
+        {
+            float y = cymin + i * dy;
+            float x = cxmin + j * dx;
+
+            size_t index = i * width + j;
+            dst[index] = mandelbrot_normal(x, y, max_iterations);
+        }
+    }
+}
+
+int mandelbrot_pak(pfloat c_re, pfloat c_im, unsigned int max_iterations)
+{
+    pfloat z_re = c_re, z_im = c_im;
+    /*
+    pint i;
+    for (i = 0; i < max_iterations; ++i)
+    {
+        if (z_re * z_re + z_im * z_im > 4.)
+            break;
+
+        pfloat new_re = z_re * z_re - z_im * z_im;
+        pfloat new_im = 2.f * z_re * z_im;
+
+        z_re = c_re + new_re;
+        z_im = c_im + new_im;
+    }
+
+    return i;
+    */
+
+    return 0;
+}
+
+void mandelbrot_loop_pak(int *dst, int width = 1080, int height = 720,
+                         double cxmin = -2, double cxmax = 1, double cymin = -1, double cymax = 1,
+                         unsigned int max_iterations = 256)
+{
+    float dx = (cxmax - cxmin) / width;
+    float dy = (cymax - cymin) / height;
+
+    for (size_t i = 0; i < height; ++i)
+    {
+        for (size_t j = 0; j < width; ++j)
+        {
+            float y = cymin + i * dy;
+            float x = cxmin + j * dx;
+
+            size_t index = i * width + j;
+            dst[index] = mandelbrot_normal(x, y, max_iterations);
+        }
+    }
+}
+
 int main(void)
 {
 
@@ -61,17 +141,31 @@ int main(void)
 
     float *vec_a = new float[n];
     float *vec_b = new float[n];
-
     std::transform(&vec_a[0], &vec_a[n], &vec_a[0], [&](auto _) { return distribution(gen); });
     std::transform(&vec_b[0], &vec_b[n], &vec_b[0], [&](auto _) { return distribution(gen); });
 
     float *vec_c = new float[n];
     float *pvec_c = new float[n];
 
-    auto duration_normal = measure_runtime([&] { loop_normal(n, vec_a, vec_b, vec_c); });
-    auto duration_pak = measure_runtime([&] { loop_paked(n, vec_a, vec_b, pvec_c); });
+    auto loop_duration_normal = measure_runtime([&] { loop_normal(n, vec_a, vec_b, vec_c); });
+    auto loop_duration_pak = measure_runtime([&] { loop_paked(n, vec_a, vec_b, pvec_c); });
+    bool loop_correct = std::equal(&vec_c[0], &vec_c[n], &pvec_c[0]);
 
-    bool correct = std::equal(&vec_c[0], &vec_c[n], &pvec_c[0]);
+    delete[] vec_c;
+    delete[] pvec_c;
+
+    size_t width = 1080;
+    size_t height = 720;
+    size_t size = width * height;
+    int *out_mandel = new int[size];
+    int *pout_mandel = new int[size];
+
+    auto mandelbrot_duration_normal = measure_runtime([&] { mandelbrot_loop_normal(out_mandel, width, height); });
+    auto mandelbrot_duration_pak = measure_runtime([&] { mandelbrot_loop_pak(pout_mandel, width, height); });
+    bool mandelbrot_correct = std::equal(&out_mandel[0], &out_mandel[size], &pout_mandel[0]);
+
+    delete[] out_mandel;
+    delete[] pout_mandel;
 
     // -------
     std::cout << "max kr8md width: " << KR8MD_MAX_VEC_REGISTER_SIZE << std::endl;
@@ -79,9 +173,16 @@ int main(void)
     std::cout << std::endl;
 
     std::cout << "Basic arithmetic on two vectors (size " << n << "):" << std::endl;
-    std::cout << "Duration normal: " << duration_normal << std::endl;
-    std::cout << "Duration pak: " << duration_pak << std::endl;
-    std::cout << "Correctness: " << correct << std::endl;
+    std::cout << "Duration normal: " << loop_duration_normal << std::endl;
+    std::cout << "Duration pak: " << loop_duration_pak << std::endl;
+    std::cout << "Correctness: " << loop_correct << std::endl;
+    std::cout << std::endl;
+
+    std::cout << "Mabdelbrot fracal (size " << width << "x" << height << "):" << std::endl;
+    std::cout << "Duration normal: " << mandelbrot_duration_normal << std::endl;
+    std::cout << "Duration pak: " << mandelbrot_duration_pak << std::endl;
+    std::cout << "Correctness: " << mandelbrot_correct << std::endl;
+    std::cout << std::endl;
 
     return 0;
 }
