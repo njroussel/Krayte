@@ -42,7 +42,7 @@ namespace kr8md
             }
         }
 
-        Pak(const T val)
+        Pak(const T &val)
         {
             for (size_t i = 0; i < W; ++i)
             {
@@ -102,12 +102,15 @@ namespace kr8md
     }
 
     using pbool32 = Pak<uint32_t>;
+    using puint32 = Pak<uint32_t>;
     using pint32 = Pak<int32_t>;
     using pfloat = Pak<float>;
     using pdouble = Pak<double>;
 
     template <size_t W>
     using pbool32_n = Pak<uint32_t, W>;
+    template <size_t W>
+    using puint32_n = Pak<uint32_t, W>;
     template <size_t W>
     using pint32_n = Pak<int32_t, W>;
     template <size_t W>
@@ -116,10 +119,12 @@ namespace kr8md
     using pdouble_n = Pak<double, W>;
 
     using pbool32_4 = pbool32_n<4>;
+    using puint32_4 = puint32_n<4>;
     using pint32_4 = pint32_n<4>;
     using pfloat_4 = pfloat_n<4>;
 
     using pbool32_8 = pbool32_n<8>;
+    using puint32_8 = puint32_n<8>;
     using pint32_8 = pint32_n<8>;
     using pfloat_8 = pfloat_n<8>;
 } // namespace kr8md
