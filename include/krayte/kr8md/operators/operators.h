@@ -11,6 +11,7 @@
 #include <krayte/kr8md/operators/add.h>
 #include <krayte/kr8md/operators/any.h>
 #include <krayte/kr8md/operators/compare.h>
+#include <krayte/kr8md/operators/construct.h>
 #include <krayte/kr8md/operators/divide.h>
 #include <krayte/kr8md/operators/increment.h>
 #include <krayte/kr8md/operators/load.h>
