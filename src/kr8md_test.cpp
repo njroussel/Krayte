@@ -90,8 +90,8 @@ int mandelbrot_pak(pfloat c_re, pfloat c_im, unsigned int max_iterations)
 {
     pfloat z_re = c_re, z_im = c_im;
     puint32 i{0u};
-    pbool32 active{true};
     puint32 pmax_iterations{max_iterations};
+    pbool32 active{i < pmax_iterations};
 
     while (any(active))
     {
