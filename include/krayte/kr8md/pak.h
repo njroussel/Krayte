@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <stddef.h>
@@ -7,7 +6,6 @@
 #include <krayte/kr8md/defaults.h>
 #include <krayte/kr8md/intrinsic_cast_types.h>
 #include <krayte/kr8md/intrinsic_types.h>
-#include <krayte/kr8md/operators/store.h>
 
 namespace kr8md
 {
