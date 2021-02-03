@@ -154,7 +154,7 @@ int main(void)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distribution(1, 100);
 
-    size_t n = 8;
+    size_t n = 80000000;
 
     float *vec_a = new float[n];
     float *vec_b = new float[n];
@@ -171,8 +171,8 @@ int main(void)
     delete[] vec_c;
     delete[] pvec_c;
 
-    size_t width = 1080;
-    size_t height = 720;
+    size_t width = 1920;
+    size_t height = 1080;
     size_t size = width * height;
     uint *out_mandel = new uint[size];
     int *pout_mandel = new int[size];
