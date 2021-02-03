@@ -54,9 +54,6 @@ uint mandelbrot_normal(float c_re, float c_im, unsigned int max_iterations)
     float z_re = c_re, z_im = c_im;
     uint i = 0;
 
-    std::cout << "z_re" << z_re << std::endl;
-    std::cout << "z_im" << z_im << std::endl;
-
     for (i = 0; i < max_iterations; ++i)
     {
         if (z_re * z_re + z_im * z_im > 4.)
@@ -71,7 +68,7 @@ uint mandelbrot_normal(float c_re, float c_im, unsigned int max_iterations)
 }
 
 void mandelbrot_loop_normal(uint *dst, int width = 1080, int height = 720,
-                            double cxmin = -2, double cxmax = 1, double cymin = -1, double cymax = 1,
+                            float cxmin = -2, float cxmax = 1, float cymin = -1, float cymax = 1,
                             unsigned int max_iterations = 256)
 {
     float dx = (cxmax - cxmin) / width;
@@ -90,23 +87,16 @@ void mandelbrot_loop_normal(uint *dst, int width = 1080, int height = 720,
     }
 }
 
-puint32 mandelbrot_pak(pfloat &c_re, pfloat &c_im, unsigned int max_iterations)
+pint32 mandelbrot_pak(pfloat &c_re, pfloat &c_im, unsigned int max_iterations)
 {
     pfloat z_re = c_re, z_im = c_im;
-    puint32 i{0u};
-    puint32 pmax_iterations{max_iterations};
+    pint32 i{0};
+    pint32 pmax_iterations{max_iterations};
     pbool32 active{i < pmax_iterations};
-    
-    std::cout << "pc_re" << c_re << std::endl;
-    std::cout << "pc_im " << c_im << std::endl;
-    std::cout << "pz_re" << z_re << std::endl;
-    std::cout << "pz_im" << z_im << std::endl;
 
     while (any(active))
     {
-        std::cout << "active0" << active << std::endl;
         masked(active, active) = z_re * z_re + z_im * z_im <= 4.f;
-        std::cout << "active1" << active << std::endl;
 
         if (!any(active))
         {
@@ -119,19 +109,22 @@ puint32 mandelbrot_pak(pfloat &c_re, pfloat &c_im, unsigned int max_iterations)
         z_re = c_re + new_re;
         z_im = c_im + new_im;
 
-        masked(i, active) = i + puint32{1u};
+        masked(i, active) = i + pint32{1};
         masked(active, active) = i < pmax_iterations;
+
+        pbool32 tmp = i < pmax_iterations;
+        pbool32 tmp2 = i < pint32{256};
     }
 
     return i;
 }
 
-void mandelbrot_loop_pak(uint *dst, int width = 1080, int height = 720,
-                         double cxmin = -2, double cxmax = 1, double cymin = -1, double cymax = 1,
+void mandelbrot_loop_pak(int *dst, int width = 1080, int height = 720,
+                         float cxmin = -2, float cxmax = 1, float cymin = -1, float cymax = 1,
                          unsigned int max_iterations = 256)
 {
-    float dx = (cxmax - cxmin) / width;
-    float dy = (cymax - cymin) / height;
+    pfloat dx{(cxmax - cxmin) / width};
+    pfloat dy{(cymax - cymin) / height};
 
     for (size_t i = 0; i < height; i++)
     {
@@ -139,17 +132,16 @@ void mandelbrot_loop_pak(uint *dst, int width = 1080, int height = 720,
 
         for (size_t j = 0; j < width; j += pfloat::width)
         {
-            puint32 pj{j};
+            pfloat pj{j};
             for (size_t p = 1; p < pfloat::width; p++)
             {
-                pj.data[i] = pj.data[0] + i;
+                pj.data[p] = pj.data[0] + p;
             }
 
             pfloat x = cxmin + pj * dx;
 
             size_t index = i * width + j;
-            puint32 result = mandelbrot_pak(x, y, max_iterations);
-            std::cout << "result " << result << std::endl;
+            pint32 result = mandelbrot_pak(x, y, max_iterations);
             store(&dst[index], result);
         }
     }
@@ -163,7 +155,6 @@ int main(void)
     std::uniform_int_distribution<> distribution(1, 100);
 
     size_t n = 8;
-    assert(n % 8 == 0);
 
     float *vec_a = new float[n];
     float *vec_b = new float[n];
@@ -180,20 +171,15 @@ int main(void)
     delete[] vec_c;
     delete[] pvec_c;
 
-    size_t width = 8;  //1080;
-    size_t height = 1; // 720;
+    size_t width = 1080;
+    size_t height = 720;
     size_t size = width * height;
     uint *out_mandel = new uint[size];
-    uint *pout_mandel = new uint[size];
+    int *pout_mandel = new int[size];
 
     auto mandelbrot_duration_normal = measure_runtime([&] { mandelbrot_loop_normal(out_mandel, width, height); });
     auto mandelbrot_duration_pak = measure_runtime([&] { mandelbrot_loop_pak(pout_mandel, width, height); });
     bool mandelbrot_correct = std::equal(&out_mandel[0], &out_mandel[size], &pout_mandel[0]);
-
-    for (size_t i = 0; i < size; i++)
-    {
-        std::cout << out_mandel[i] << " " << pout_mandel[i] << std::endl;
-    }
 
     delete[] out_mandel;
     delete[] pout_mandel;

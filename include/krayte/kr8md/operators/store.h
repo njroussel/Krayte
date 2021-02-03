@@ -11,6 +11,11 @@ namespace kr8md
         _mm256_storeu_si256((__m256i *)addr, a);
     }
 
+    KR8MD_INLINE void store(int32_t *const addr, const pint32_8 &a)
+    {
+        _mm256_storeu_si256((__m256i *)addr, a);
+    }
+
     KR8MD_INLINE void store(float *const addr, const pfloat_8 a)
     {
         _mm256_storeu_ps(addr, a);
