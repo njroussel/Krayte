@@ -111,9 +111,6 @@ pint32 mandelbrot_pak(pfloat &c_re, pfloat &c_im, unsigned int max_iterations)
 
         masked(i, active) = i + pint32{1};
         masked(active, active) = i < pmax_iterations;
-
-        pbool32 tmp = i < pmax_iterations;
-        pbool32 tmp2 = i < pint32{256};
     }
 
     return i;
