@@ -32,6 +32,8 @@ namespace kr8md
 
         Pak(const intrinsic_t intrinsinc_) : intrinsic(intrinsinc_) {}
 
+        Pak(const intrinsic_cast_t intrinsinc_cast_) : intrinsic_cast(intrinsinc_cast_) {}
+
         Pak(T const *const arr)
         {
             for (size_t i = 0; i < W; ++i)

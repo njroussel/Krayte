@@ -20,6 +20,12 @@ namespace kr8md
 
 #ifdef __SSE4_2__
     template <>
+    struct intrinsic_cast_t<uint32_t, 4>
+    {
+        using type = intrinsic_t<float, 4>::type;
+    };
+
+    template <>
     struct intrinsic_cast_t<int32_t, 4>
     {
         using type = intrinsic_t<float, 4>::type;
@@ -34,6 +40,12 @@ namespace kr8md
 
 #ifdef __AVX2__
     template <>
+    struct intrinsic_cast_t<uint32_t, 8>
+    {
+        using type = intrinsic_t<float, 8>::type;
+    };
+
+    template <>
     struct intrinsic_cast_t<int32_t, 8>
     {
         using type = intrinsic_t<float, 8>::type;
@@ -44,6 +56,5 @@ namespace kr8md
     {
         using type = intrinsic_t<int32_t, 8>::type;
     };
-
 #endif
 } // namespace kr8md
