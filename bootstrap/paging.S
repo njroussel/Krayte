@@ -84,13 +84,25 @@ ASM_FUNC_DEF64(_set_table_entry):
     // Check that this entry is not currently used.
     test    QWORD PTR [rdi], (1 << PRESENT_SHIFT)
     jz      .not_used
-    // This entry is marked as present, this means it is still in use.
+    // This entry is marked as present, this means it is still in use. We only
+    // allow to change the permission bits of an existing mapping, not where it
+    // points.
+    mov     rax, [rdi]
+    shr     rax, 12
+    mov     r8, rdx
+    shr     r8, 12
+    cmp     rax, r8
+    je      0f
+    // This call would change where the entry point, this is not allowed.
     PANIC64("_set_table_entry: Tried to overwrite an existing mapping\n")
 .not_used:
 
+    // Zero-out the entry in case it was used before.
+    mov     QWORD PTR [rdi], 0x0
+
     // Set address of next level table.
     or      [rdi], rdx
-    // Set present and write bits.
+    // Set present bits.
     or      QWORD PTR [rdi], (1 << PRESENT_SHIFT)
     // Set other flags.
     or      QWORD PTR [rdi], rcx
