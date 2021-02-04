@@ -87,11 +87,11 @@ void mandelbrot_loop_normal(uint *dst, int width = 1080, int height = 720,
     }
 }
 
-pint32 mandelbrot_pak(pfloat &c_re, pfloat &c_im, unsigned int max_iterations)
+puint32 mandelbrot_pak(pfloat &c_re, pfloat &c_im, unsigned int max_iterations)
 {
     pfloat z_re = c_re, z_im = c_im;
-    pint32 i{0};
-    pint32 pmax_iterations{max_iterations};
+    puint32 i{0u};
+    puint32 pmax_iterations{max_iterations};
     pbool32 active{i < pmax_iterations};
 
     while (any(active))
@@ -109,19 +109,19 @@ pint32 mandelbrot_pak(pfloat &c_re, pfloat &c_im, unsigned int max_iterations)
         z_re = c_re + new_re;
         z_im = c_im + new_im;
 
-        masked(i, active) = i + pint32{1};
+        masked(i, active) = i + puint32{1u};
         masked(active, active) = i < pmax_iterations;
     }
 
     return i;
 }
 
-void mandelbrot_loop_pak(int *dst, int width = 1080, int height = 720,
+void mandelbrot_loop_pak(uint *dst, int width = 1080, int height = 720,
                          float cxmin = -2, float cxmax = 1, float cymin = -1, float cymax = 1,
                          unsigned int max_iterations = 256)
 {
-    pfloat dx{(cxmax - cxmin) / width};
-    pfloat dy{(cymax - cymin) / height};
+    float dx = (cxmax - cxmin) / width;
+    float dy = (cymax - cymin) / height;
 
     for (size_t i = 0; i < height; i++)
     {
@@ -129,7 +129,7 @@ void mandelbrot_loop_pak(int *dst, int width = 1080, int height = 720,
 
         for (size_t j = 0; j < width; j += pfloat::width)
         {
-            pfloat pj{j};
+            pfloat pj{(float)j};
             for (size_t p = 1; p < pfloat::width; p++)
             {
                 pj.data[p] = pj.data[0] + p;
@@ -137,8 +137,9 @@ void mandelbrot_loop_pak(int *dst, int width = 1080, int height = 720,
 
             pfloat x = cxmin + pj * dx;
 
+            puint32 result = mandelbrot_pak(x, y, max_iterations);
+
             size_t index = i * width + j;
-            pint32 result = mandelbrot_pak(x, y, max_iterations);
             store(&dst[index], result);
         }
     }
@@ -172,7 +173,7 @@ int main(void)
     size_t height = 1080;
     size_t size = width * height;
     uint *out_mandel = new uint[size];
-    int *pout_mandel = new int[size];
+    uint *pout_mandel = new uint[size];
 
     auto mandelbrot_duration_normal = measure_runtime([&] { mandelbrot_loop_normal(out_mandel, width, height); });
     auto mandelbrot_duration_pak = measure_runtime([&] { mandelbrot_loop_pak(pout_mandel, width, height); });

@@ -6,6 +6,11 @@
 namespace kr8md
 {
 #ifdef __SSE4_2__
+    KR8MD_INLINE puint32_4 operator+(const puint32_4 &a, const puint32_4 &b)
+    {
+        return _mm_add_epi32(a, b);
+    }
+
     KR8MD_INLINE pint32_4 operator+(const pint32_4 &a, const pint32_4 &b)
     {
         return _mm_add_epi32(a, b);
@@ -18,6 +23,11 @@ namespace kr8md
 #endif
 
 #ifdef __AVX2__
+    KR8MD_INLINE puint32_8 operator+(const puint32_8 &a, const puint32_8 &b)
+    {
+        return _mm256_add_epi32(a, b);
+    }
+
     KR8MD_INLINE pint32_8 operator+(const pint32_8 &a, const pint32_8 &b)
     {
         return _mm256_add_epi32(a, b);

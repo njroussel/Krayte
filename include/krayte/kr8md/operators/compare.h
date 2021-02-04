@@ -7,6 +7,11 @@ namespace kr8md
     // less-than <
 
 #ifdef __SSE4_2__
+    KR8MD_INLINE pbool32_4 operator<(const puint32_4 &a, const puint32_4 &b)
+    {
+        return _mm_cmplt_epi32(a, b);
+    }
+
     KR8MD_INLINE pbool32_4 operator<(const pint32_4 &a, const pint32_4 &b)
     {
         return _mm_cmplt_epi32(a, b);
@@ -19,6 +24,11 @@ namespace kr8md
 #endif
 
 #ifdef __AVX2__
+    KR8MD_INLINE pbool32_8 operator<(const puint32_8 &a, const puint32_8 &b)
+    {
+        return _mm256_cmpgt_epi32(b, a);
+    }
+
     KR8MD_INLINE pbool32_8 operator<(const pint32_8 &a, const pint32_8 &b)
     {
         return _mm256_cmpgt_epi32(b, a);
