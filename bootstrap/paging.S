@@ -262,6 +262,86 @@ ASM_FUNC_DEF64(map_frame):
     ret
 
 // =============================================================================
+// Map a memory region to virtual memory. This routine can map regions of
+// arbitrary length and address do not have to be page-aligned. However they
+// need to have the same offset within the page/frame.
+// @param (RDI): Virtual address to map to. This address does not have to be
+// page aligned, the routine will take care of this.
+// @param (RSI): Physical address to map. Not necessarily page aligned.
+// @param (RDX): The number of bytes to map, not necessarily a multiple of
+// PAGE_SIZE.
+// @param (RCX): The flags of the map.
+// =============================================================================
+ASM_FUNC_DEF64(map):
+    push    rbp
+    mov     rbp, rsp
+
+    push    rbx
+    push    r12
+    push    r13
+
+    // Make sure the virtual and physical addresses have the same offset withing
+    // the page.
+    mov     rax, (PAGE_SIZE - 1)
+    mov     r8, rdi
+    mov     r9, rsi
+    and     r8, rax
+    and     r9, rax
+    cmp     r8, r9
+    je      0f
+    PANIC64("map: virtual and physical addresses have different page offsets")
+0:
+
+    // RBX = Original virtual address (RDI).
+    mov     rbx, rdi
+
+    // R12 = Mapping flags.
+    mov     r12, rcx
+
+    // Make the addresses page-aligned.
+    mov     rax, ~(PAGE_SIZE - 1)
+    and     rdi, rax
+    and     rsi, rax
+
+    // RCX = number of page(s) to map.
+    mov     rcx, rbx
+    add     rcx, rdx
+    and     rcx, ~(PAGE_SIZE - 1)
+    sub     rcx, rdi
+    shr     rcx, 12
+    inc     rcx
+
+    // Now map the pages one-by-one.
+    // RBX = Next virtual address to use for the call to map_frame.
+    // R12 = Flags. (This was already done above).
+    // R13 = Next physical address to use for the call to map_frame.
+    mov     rbx, rdi
+    mov     r13, rsi
+0:
+    // Save loop counter.
+    push    rcx
+
+    // Map the next page/frame.
+    mov     rdi, rbx
+    mov     rsi, r13
+    mov     rdx, r12
+    call    map_frame
+
+    // Advance the virtual and physical pointer to the next page/frame to be
+    // mapped.
+    add     rbx, PAGE_SIZE
+    add     r13, PAGE_SIZE
+    pop     rcx
+    loop    0b
+    
+    // Mapping done.
+    pop     r13
+    pop     r12
+    pop     rbx
+    leave
+    ret
+
+// =============================================================================
 // Allocate a memory area in the current virtual address space. This routine
 // will allocate physical frames and map them contiguously in virtual memory
 // starting at a given address.
