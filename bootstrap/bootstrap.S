@@ -197,6 +197,9 @@ ASM_FUNC_DEF32(bootstrap_main):
 
 .code64
 .long_mode_target:
+    // Parse ACPI tables. This must be done in long mode.
+    call    init_acpi
+
     // We are now in long mode, hence paging is enabled (mandatory for long
     // mode), therefore we cannot access the physical memory containing the
     // loaded file. Map those frames now.

@@ -123,3 +123,55 @@
 // (NUL-terminated string) The name of the file.
 #define METADATA_NAME_OFF       0x8
 // ============================================================================= 
+
+// ============================================================================= 
+// ACPI offsets and constants.
+// Root System Descriptor Pointer (RSDP) offsets:
+// (QWORD) Signature of the table, must contain "RSD PTR ".
+#define ACPI_RSDP_SIGNATURE_OFF 0x00
+// (BYTE) Checksum of the RSDP.
+#define ACPI_RSDP_CHECKSUM_OFF  0x08
+// (6 BYTES) OEM identifier.
+#define ACPI_RSDP_OEMID_OFF     0x09
+// (BYTE) Revision. 0 -> ACPI v1, 1 -> ACPI v2 to v6.1.
+#define ACPI_RSDP_REVISION_OFF  0x0F
+// (DWORD) Linear Address of the RSDT.
+#define ACPI_RSDP_RSDT_ADDR_OFF 0x10
+// Size of a RSDP for ACPI v1.
+#define ACPI_RSDP_SIZE  0x14
+
+// System Descriptor Table (SDT) header offsets:
+// (4 BYTES) Signature of the SDT.
+#define ACPI_SDT_HDR_SIGNATURE_OFF          0x0
+// (DWORD) Length of the SDT in bytes, including the header.
+#define ACPI_SDT_HDR_LENGTH_OFF             0x4
+// (BYTE) Revision of the SDT.
+#define ACPI_SDT_HDR_REVISION_OFF           0x8
+// (BYTE) Checksum so that the sum of all bytes has its lower byte to 0x0.
+#define ACPI_SDT_HDR_CHECKSUM_OFF           0x9
+// (6 BYTES) OEM ID String.
+#define ACPI_SDT_HDR_OEMID_OFF              0xA
+// (8 BYTES) OEM ID String bis.
+#define ACPI_SDT_HDR_OEMTABLEID_OFF         0x10
+// (DWORD) OEM Revision.
+#define ACPI_SDT_HDR_OEMREVISION_OFF        0x18
+// (DWORD) Creator ID.
+#define ACPI_SDT_HDR_CREATORID_OFF          0x1C
+// (DWORD) Creator Revision.
+#define ACPI_SDT_HDR_CREATORREVISION_OFF    0x20
+// Size of a SDT header.
+#define ACPI_SDT_HDR_SIZE ACPI_SDT_HDR_CREATORREVISION_OFF + 4
+
+// Offsets for SDT with signature == "APIC", those tables are also known as
+// Multiple APIC Description Table (MADT). An MADT starts with an SDT header
+// followed by the fields:
+// (DWORD) Physical address of the LAPIC.
+#define ACPI_MADT_LAPIC_ADDR_OFF    0x24
+#define ACPI_MADT_ENTRIES_OFF       0x2C
+// The MADT then contains an arbitrary number of variable sized entries. Each
+// entry starts with a header:
+// (BYTE) Type of the entry. See acpi.S for more info about the different types.
+#define ACPI_MADT_ENTRY_TYPE_OFF    0x0
+// (BYTE) Length of the entry in byte, including the header.
+#define ACPI_MADT_ENTRY_LENGTH_OFF  0x1
+// ============================================================================= 

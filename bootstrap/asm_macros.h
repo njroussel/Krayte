@@ -130,3 +130,11 @@
     _PRINTF32("[WARN ] :", fmt)
 #define WARN64(fmt)   ;\
     _PRINTF64("[WARN ] :", fmt)
+
+// Register a function as a parser for a given SDT signature. This is only used
+// in acpi.S.
+// @param signature: A 4-byte string containing the signature.
+// @param func: A pointer to the function parsing such SDTs.
+#define REGISTER_SDT_PARSER(signature, func)    ;\
+    .ascii signature                            ;\
+    .quad func
