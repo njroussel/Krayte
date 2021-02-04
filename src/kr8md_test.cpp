@@ -151,13 +151,15 @@ int main(void)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distribution(1, 100);
+    auto sample_one = [&](auto _) { return distribution(gen); };
 
     size_t n = 80000000;
 
     float *vec_a = new float[n];
     float *vec_b = new float[n];
-    std::transform(&vec_a[0], &vec_a[n], &vec_a[0], [&](auto _) { return distribution(gen); });
-    std::transform(&vec_b[0], &vec_b[n], &vec_b[0], [&](auto _) { return distribution(gen); });
+
+    std::transform(&vec_a[0], &vec_a[n], &vec_a[0], sample_one);
+    std::transform(&vec_b[0], &vec_b[n], &vec_b[0], sample_one);
 
     float *vec_c = new float[n];
     float *pvec_c = new float[n];
