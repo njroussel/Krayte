@@ -44,6 +44,13 @@
 // The goal of the generic_handler is to compute the vector number, save the
 // registers onto the stack, start the processing of the interrupt and later
 // return to the interrupted context.
+//
+// Instead of processing any vector, the generic_handler delegates processing to
+// `interrupt callback`. An interrupt callback is a routine taking as argument
+// a pointer to an interrupt frame.
+// Interrupt callbacks are stored in a table indexed by vector number. When an
+// interrupt is raise, the generic_handler looks up the table and call the
+// callback, if any, passing as argument (RDI) a pointer to the interrupt frame.
 
 #include <asm_macros.h>
 #include <consts.h>
@@ -61,6 +68,13 @@ IDT_ADDR:
 .quad   0x0
 // Memory region containing all the interrupt handlers referenced by the IDT.
 HANDLERS_ARRAY:
+.quad   0x0
+
+// The INTERRUPT_CALLBACKS is an array of function pointer index by vector. When
+// the generic_handler processes a particular vector, it will lookup the
+// function in this table (at index = vector) and call it. Values of 0x0
+// indicate no callback is available for the given vector.
+INTERRUPT_CALLBACKS:
 .quad   0x0
 
 // =============================================================================
@@ -225,6 +239,60 @@ ASM_FUNC_DEF64(init_interrupt):
     lidt    [IDT_DESC] 
     INFO64("IDTR set\n")
 
+    // Allocate the array of callbacks.
+    mov     rdi, INTERRUPT_IDT_SIZE * 8
+    call    allocate_low_mem64
+    mov     [INTERRUPT_CALLBACKS], rax
+    // Zero the array to avoid calling garbage.
+    mov     rdi, rax
+    xor     rax, rax
+    mov     rcx, INTERRUPT_IDT_SIZE
+    rep     stosq
+
+    leave
+    ret
+
+// =============================================================================
+// Set the callback for a given interrupt vector.
+// @param (RDI): Vector to set callback for.
+// @param (RSI): Pointer on callback/routine.
+// =============================================================================
+ASM_FUNC_DEF64(set_interrupt_callback):
+    push    rbp
+    mov     rbp, rsp
+
+    // Make sure not to go out of bounds.
+    cmp     rdi, INTERRUPT_IDT_SIZE
+    jb      0f
+    PANIC64("set_interrupt_callback: Out-of-bounds vector")
+0:
+
+    // RAX = Pointer on entry in INTERRUPT_CALLBACKS
+    mov     rax, [INTERRUPT_CALLBACKS]
+    lea     rax, [rax + rdi * 8]
+
+    // Make sure there is no callback already registered. If this is the case
+    // this could be a bug or race condition.
+    cmp     QWORD PTR [rax], 0x0
+    je      0f
+    PANIC64("set_interrupt_callback: Overwritting callback")
+0:
+
+    // Register the new callback.
+    mov     [rax], rsi
+
+    leave
+    ret
+
+// =============================================================================
+// Remove the callback associated with a given interrupt vector.
+// @param (RDI): Vector to remove the callback for.
+// =============================================================================
+ASM_FUNC_DEF64(del_interrupt_callback):
+    push    rbp
+    mov     rbp, rsp
+    mov     rax, [INTERRUPT_CALLBACKS]
+    mov     QWORD PTR [rax + rdi * 8], 0x0
     leave
     ret
 
@@ -324,13 +392,23 @@ ASM_FUNC_DEF64(generic_handler):
     // Replace the return address with the vector number computed.
     mov     [rbp + INT_FRAME_VECTOR_OFF], rax
 
-    // Step 4: Here we would typically handle the interrupt. For now simply log
-    // the interrupt.
     push    [rbp + INT_FRAME_RIP_OFF]
     push    [rbp + INT_FRAME_ERROR_CODE_OFF]
     push    [rbp + INT_FRAME_VECTOR_OFF]
     DEBUG64("INTERRUPT, vector = %b, error code = %q, RIP = %q\n")
     mov     rsp, rbp
+
+    // Step 4: Look up the INTERRUPT_CALLBACKS table for any callback for that
+    // vector.
+    // RCX = INTERRUPT_CALLBACKS[vector]
+    mov     rax, [rbp + INT_FRAME_VECTOR_OFF]
+    mov     rcx, [INTERRUPT_CALLBACKS]
+    mov     rcx, [rcx + rax * 8]
+    test    rcx, rcx
+    jz      0f
+    mov     rdi, rbp
+    call    rcx
+0:
 
     call    lapic_eoi
 
