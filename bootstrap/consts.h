@@ -175,3 +175,41 @@
 // (BYTE) Length of the entry in byte, including the header.
 #define ACPI_MADT_ENTRY_LENGTH_OFF  0x1
 // ============================================================================= 
+
+// ============================================================================= 
+// Interrupt related constants.
+// The size of the IDT in number of entries, if this value is X then the IDT
+// will handle interrupts vectors 0, 1, ..., X - 1.
+#define INTERRUPT_IDT_SIZE  0x30
+
+// Offsets for the interrupt frame constructed by the generic interrupt handler.
+// (QWORD) RDI value at the time of the interrupt.
+#define INT_FRAME_SAVED_RDI_OFF     0x00
+// (QWORD) RSI value at the time of the interrupt.
+#define INT_FRAME_SAVED_RSI_OFF     0x08
+// (QWORD) RBP value at the time of the interrupt.
+#define INT_FRAME_SAVED_RBP_OFF     0x10
+// (QWORD) RBX value at the time of the interrupt.
+#define INT_FRAME_SAVED_RBX_OFF     0x18
+// (QWORD) RDX value at the time of the interrupt.
+#define INT_FRAME_SAVED_RDX_OFF     0x20
+// (QWORD) RCX value at the time of the interrupt.
+#define INT_FRAME_SAVED_RCX_OFF     0x28
+// (QWORD) RAX value at the time of the interrupt.
+#define INT_FRAME_SAVED_RAX_OFF     0x30
+// (QWORD) Vector of the interrupt.
+#define INT_FRAME_VECTOR_OFF        0x38
+// (QWORD) Error code of the interrupt. For vector that do not push error code
+// or software interrupts this value is a placeholder.
+#define INT_FRAME_ERROR_CODE_OFF    0x40
+// (QWORD) RIP at the time of the interrupt.
+#define INT_FRAME_RIP_OFF           0x48
+// (QWORD) CS at the time of the interrupt.
+#define INT_FRAME_CS_OFF            0x50
+// (QWORD) RFLAGS at the time of the interrupt.
+#define INT_FRAME_RFLAGS_OFF        0x58
+// (QWORD) RSP at the time of the interrupt.
+#define INT_FRAME_RSP_OFF           0x60
+// (QWORD) SS at the time of the interrupt.
+#define INT_FRAME_SS_OFF            0x68
+// ============================================================================= 

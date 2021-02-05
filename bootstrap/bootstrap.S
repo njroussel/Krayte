@@ -197,6 +197,10 @@ ASM_FUNC_DEF32(bootstrap_main):
 
 .code64
 .long_mode_target:
+    // Initialize interrupts ASAP. This will be useful to detect any faults in
+    // subsequent initialization routines.
+    call    init_interrupt
+
     // Parse ACPI tables. This must be done in long mode.
     call    init_acpi
 
