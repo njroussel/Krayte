@@ -200,6 +200,7 @@ ASM_FUNC_DEF32(bootstrap_main):
     // Initialize interrupts ASAP. This will be useful to detect any faults in
     // subsequent initialization routines.
     call    init_interrupt
+    call    init_ioapic
 
     // Parse ACPI tables. This must be done in long mode.
     call    init_acpi
