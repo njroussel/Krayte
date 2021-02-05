@@ -565,6 +565,7 @@ file_num_frames:
 // data segment and under 0xFFFF so that they will always be accessible from
 // real-mode code.
 // @param (DWORD) size: The number of bytes to allocated.
+// @return (EAX): Address of allocated memory.
 // ============================================================================= 
 ASM_FUNC_DEF32(allocate_low_mem):
     push    ebp
@@ -581,6 +582,34 @@ ASM_FUNC_DEF32(allocate_low_mem):
 
     // The address will not fit in a 16-bit registers.
     PANIC32("No space left\n")
+0:
+
+    // Allocation OK. Move the alloc_addr.
+    mov     [alloc_addr], ecx
+    // EAX is already pointing to the beginning of the allocated memory.
+    leave
+    ret
+
+// ============================================================================= 
+// 64-bit version of the low-memory allocator.
+// @param (RDI): Number of bytes to allocate.
+// @return (RAX): Address of the allocated memory.
+// ============================================================================= 
+ASM_FUNC_DEF64(allocate_low_mem64):
+    push    rbp
+    mov     rbp, rsp
+
+    // EAX = Address of next allocation (this allocation).
+    mov     eax, [alloc_addr]
+
+    // ECX = New address of alloc_addr.
+    mov     ecx, eax
+    add     ecx, edi
+    cmp     eax, 0xFFFF
+    jb      0f
+
+    // The address will not fit in a 16-bit registers.
+    PANIC64("No space left\n")
 0:
 
     // Allocation OK. Move the alloc_addr.
