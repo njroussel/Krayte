@@ -332,6 +332,8 @@ ASM_FUNC_DEF64(generic_handler):
     DEBUG64("INTERRUPT, vector = %b, error code = %q, RIP = %q\n")
     mov     rsp, rbp
 
+    call    lapic_eoi
+
     // Interrupt has been handled, we are about to return to the interrputed
     // context. First restore GP registers.
     pop     rdi

@@ -200,10 +200,14 @@ ASM_FUNC_DEF32(bootstrap_main):
     // Initialize interrupts ASAP. This will be useful to detect any faults in
     // subsequent initialization routines.
     call    init_interrupt
-    call    init_ioapic
 
     // Parse ACPI tables. This must be done in long mode.
     call    init_acpi
+
+    // Now that we parse the ACPI tables, we know the addresses of the LAPIC and
+    // IOAPIC. Initialize them.
+    call    init_lapic
+    call    init_ioapic
 
     // We are now in long mode, hence paging is enabled (mandatory for long
     // mode), therefore we cannot access the physical memory containing the
