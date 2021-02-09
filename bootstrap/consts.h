@@ -182,6 +182,10 @@
 // will handle interrupts vectors 0, 1, ..., X - 1.
 #define INTERRUPT_IDT_SIZE  0x30
 
+// Vectors used in this project:
+// Vector used for the redirected PIT IRQs.
+#define INTERRUPT_PIT_VEC   0x20
+
 // Offsets for the interrupt frame constructed by the generic interrupt handler.
 // (QWORD) RDI value at the time of the interrupt.
 #define INT_FRAME_SAVED_RDI_OFF     0x00
@@ -212,4 +216,17 @@
 #define INT_FRAME_RSP_OFF           0x60
 // (QWORD) SS at the time of the interrupt.
 #define INT_FRAME_SS_OFF            0x68
+// ============================================================================= 
+
+// ============================================================================= 
+// Programmable Interval Timer (PIT) constants.
+// This is the base frequency of the crystal oscillator of the PIT.
+#define PIT_BASE_FREQ   1193182
+// Choose a reload value so that PIT_FREQ % RELOAD_VAL == 0 as to avoid rounding
+// errors! 29102 is the biggest divisor of the PIT frequency.
+#define PIT_RELOAD_VAL  29102
+// This is the divided frequency. THIS IS THE DROID YOU ARE LOOKING FOR!!
+// Throughout this project, the PIT is ALWAYS running at this frequency. DO NOT
+// use PIT_BASE_FREQ in computations!
+#define PIT_FREQ        (PIT_BASE_FREQ / PIT_RELOAD_VAL)
 // ============================================================================= 
