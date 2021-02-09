@@ -392,12 +392,6 @@ ASM_FUNC_DEF64(generic_handler):
     // Replace the return address with the vector number computed.
     mov     [rbp + INT_FRAME_VECTOR_OFF], rax
 
-    push    [rbp + INT_FRAME_RIP_OFF]
-    push    [rbp + INT_FRAME_ERROR_CODE_OFF]
-    push    [rbp + INT_FRAME_VECTOR_OFF]
-    DEBUG64("INTERRUPT, vector = %b, error code = %q, RIP = %q\n")
-    mov     rsp, rbp
-
     // Step 4: Look up the INTERRUPT_CALLBACKS table for any callback for that
     // vector.
     // RCX = INTERRUPT_CALLBACKS[vector]
@@ -405,11 +399,20 @@ ASM_FUNC_DEF64(generic_handler):
     mov     rcx, [INTERRUPT_CALLBACKS]
     mov     rcx, [rcx + rax * 8]
     test    rcx, rcx
-    jz      0f
+    jz      ._generic_handler_no_callback
     mov     rdi, rbp
     call    rcx
-0:
+    jmp     ._generic_handler_eoi
 
+._generic_handler_no_callback:
+    // No handler, print a warning.
+    push    [rbp + INT_FRAME_RIP_OFF]
+    push    [rbp + INT_FRAME_ERROR_CODE_OFF]
+    push    [rbp + INT_FRAME_VECTOR_OFF]
+    WARN64("UNHANDLED INTERRUPT, vector = %b, error code = %q, RIP = %q\n")
+    mov     rsp, rbp
+
+._generic_handler_eoi:
     call    lapic_eoi
 
     // Interrupt has been handled, we are about to return to the interrputed
