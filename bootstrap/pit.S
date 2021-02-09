@@ -51,7 +51,8 @@ ASM_FUNC_DEF64(start_pit):
 // does _NOT_ disable interrupts.
 // =============================================================================
 ASM_FUNC_DEF64(stop_pit):
-    // TODO: Once we can mask IRQs on the I/O APIC we should call that here.
+    xor     rdi, rdi
+    call    ioapic_mask_legacy_irq
     ret
 
 // Calibration related data. See below.

@@ -69,6 +69,74 @@ ASM_FUNC_DEF64(init_ioapic):
     ret
 
 // =============================================================================
+// Write a redirection entry in the redirection table.
+// @param (RDI): Index in the redirection table.
+// @param (RSI): Content of the entry.
+// =============================================================================
+ASM_FUNC_DEF64(_write_redir_entry):
+    push    rbp
+    mov     rbp, rsp
+
+    // RAX = IOAPIC.
+    mov     rax, [IOAPIC_ADDR]
+
+    // Write the new entry. The low DWORD should be written to IOREDTBLx and the
+    // high DWORD to IOREDTBLx+1. Although the specification is not clear about
+    // how to write those, we should probably write the high DWORD first, as the
+    // low DWORD could unmask the interrupt.
+    // CL = IOREDTBLx+1
+    mov     cl, dil
+    shl     cl, 1
+    add     cl, IOREDTBL0 + 1
+
+    // Write high DWORD.
+    mov     rdx, rsi
+    shr     rdx, 32
+    mov     BYTE PTR [rax + IOREGSEL], cl
+    mov     [rax + IOWIN], edx
+
+    // Write low DWORD.
+    dec     cl
+    shr     rdx, 32
+    mov     BYTE PTR [rax + IOREGSEL], cl
+    mov     [rax + IOWIN], esi
+
+    leave
+    ret
+
+// =============================================================================
+// Get the source index/vector for a given IRQ number.
+// @param (RDI): The IRQ to convert.
+// @param (RAX): The I/O APIC source vector.
+// =============================================================================
+ASM_FUNC_DEF64(_get_source_for_irq):
+    push    rbp
+    mov     rbp, rsp
+    push    rbx
+
+    // Check that this is a correct IRQ.
+    cmp     rdi, 0x10
+    jb      0f
+    PANIC64("_get_source_for_irq: Invalid IRQ")
+0:
+
+    // Check that the IRQ number is within the range of the redirection table.
+    cmp     dil, [ioapic_max_redir_entry]
+    jbe     0f
+    PANIC64("_get_source_for_irq: IRQ number is outside bounds of table")
+0:
+
+    // Get the mapping from the IRQ_REDIR array.    
+    lea     rbx, [IRQ_REDIR]
+    mov     al, dil
+    xlatb 
+    movzx   rax, al
+
+    pop     rbx
+    leave
+    ret
+
+// =============================================================================
 // Map a legacy IRQ number to a vector. Subsequent interrupts on this IRQ will
 // raise an interrupt with the given vector on the current cpu.
 // @param (RDI): Legacy IRQ number.
@@ -77,13 +145,6 @@ ASM_FUNC_DEF64(init_ioapic):
 ASM_FUNC_DEF64(ioapic_redir_legacy_irq):
     push    rbp
     mov     rbp, rsp
-    push    rbx
-
-    // Check that the IRQ number is within the range of the redirection table.
-    cmp     dil, [ioapic_max_redir_entry]
-    jbe     0f
-    PANIC64("ioapic_redir_legacy_irq: IRQ number is outside bounds of table")
-0:
 
     push    rsi
     push    rdi
@@ -91,15 +152,9 @@ ASM_FUNC_DEF64(ioapic_redir_legacy_irq):
     pop     rdi
     pop     rsi
 
-    // The IRQ may not be identity-mapped to the I/O APIC. Look up the IRQ_REDIR
-    // table from ACPI to use the correct source.
-    lea     rbx, [IRQ_REDIR]
-    mov     al, dil
-    xlatb 
-    mov     dil, al
-
-    // RBX = IOAPIC.
-    mov     rbx, [IOAPIC_ADDR]
+    // RDI already contains IRQ number.
+    call    _get_source_for_irq
+    mov     rdi, rax
 
     // Compute the value to write into the redirection table.
     // RAX = entry.
@@ -115,27 +170,28 @@ ASM_FUNC_DEF64(ioapic_redir_legacy_irq):
     xor     rax, rax
     mov     al, sil
 
-    // Write the new entry. The low DWORD should be written to IOREDTBLx and the
-    // high DWORD to IOREDTBLx+1. Although the specification is not clear about
-    // how to write those, we should probably write the high DWORD first, as the
-    // low DWORD will unmask the interrupt.
-    // CL = IOREDTBLx+1
-    mov     cl, dil
-    shl     cl, 1
-    add     cl, IOREDTBL0 + 1
+    // RDI already has the entry index.
+    mov     rsi, rax
+    call    _write_redir_entry
 
-    // Write high DWORD.
-    mov     rdx, rax
-    shr     rdx, 32
-    mov     BYTE PTR [rbx + IOREGSEL], cl
-    mov     [rbx + IOWIN], edx
+    leave
+    ret
 
-    // Write low DWORD.
-    dec     cl
-    shr     rdx, 32
-    mov     BYTE PTR [rbx + IOREGSEL], cl
-    mov     [rbx + IOWIN], eax
+// =============================================================================
+// Mask an IRQ from the I/O APIC.
+// @param (RDI): The IRQ number to mask.
+// =============================================================================
+ASM_FUNC_DEF64(ioapic_mask_legacy_irq):
+    push    rbp
+    mov     rbp, rsp
 
-    pop     rbx
+    // Get the index from the IRQ number.
+    call    _get_source_for_irq
+    mov     rdi, rax
+
+    // Bit 16 masks the interrupt.
+    mov     rsi, (1 << 16)
+    call    _write_redir_entry
+
     leave
     ret
