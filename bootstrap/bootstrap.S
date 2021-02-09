@@ -206,8 +206,14 @@ ASM_FUNC_DEF32(bootstrap_main):
 
     // Now that we parse the ACPI tables, we know the addresses of the LAPIC and
     // IOAPIC. Initialize them.
-    call    init_lapic
+    // We need to initialize the IOAPIC before the LAPIC since the LAPIC timer
+    // calibration will need to re-route PIT IRQ 0.
     call    init_ioapic
+    call    init_lapic
+
+    // Compute or calibrate the TSC's frequency. This must be done after
+    // initializing the I/O APIC and LAPIC as it might use the PIT to calibrate.
+    call    init_tsc
 
     // We are now in long mode, hence paging is enabled (mandatory for long
     // mode), therefore we cannot access the physical memory containing the

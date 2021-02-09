@@ -23,17 +23,20 @@ disk.img: $(BOOTSTRAP_IMG_PATH) $(APP_PATH)
 	./create_img.py $@ $^
 
 # Set of flags used by Qemu.
-QEMU_FLAGS=-s -m 1024 -no-reboot -no-shutdown
+# Note: The +invtsc indicates to Qemu to add the constant TSC freq extension. It
+# turns out that even if the host support this extension, Qemu does not show it
+# to the VM hence why we need to add it here.
+QEMU_FLAGS=-s -m 1024 -no-reboot -no-shutdown -enable-kvm -cpu host,+invtsc
 
 # Run Qemu with the disk image. The GDB server is started as well but Qemu does
 # not wait to start the execution.
 run: disk.img
-	qemu-system-x86_64 -drive file=$<,format=raw $(QEMU_FLAGS) -enable-kvm -cpu host
+	qemu-system-x86_64 -drive file=$<,format=raw $(QEMU_FLAGS)
 
 # Run Qemu with the disk image. The GDB server is started as well and Qemu WAITs
 # for a continue command from a GDB session before starting execution.
 runs: disk.img
-	qemu-system-x86_64 -drive file=$<,format=raw -S $(QEMU_FLAGS) -enable-kvm -cpu host
+	qemu-system-x86_64 -drive file=$<,format=raw -S $(QEMU_FLAGS)
 
 # Clean recursively.
 .PHONY: clean
