@@ -184,7 +184,9 @@
 
 // Vectors used in this project:
 // Vector used for the redirected PIT IRQs.
-#define INTERRUPT_PIT_VEC   0x20
+#define INTERRUPT_PIT_VEC       0x20
+// Vector used for syscalls through software interrupts.
+#define INTERRUPT_SYSCALL_VEC   0x21
 
 // Offsets for the interrupt frame constructed by the generic interrupt handler.
 // (QWORD) R15 value at the time of the interrupt.
@@ -245,4 +247,14 @@
 // Throughout this project, the PIT is ALWAYS running at this frequency. DO NOT
 // use PIT_BASE_FREQ in computations!
 #define PIT_FREQ        (PIT_BASE_FREQ / PIT_RELOAD_VAL)
+// ============================================================================= 
+
+// ============================================================================= 
+// Syscall constants.
+//
+// Syscall numbers:
+// Test syscall 0. Reserved for testing purposes.
+#define SYSNR_TEST0 0x0
+// Test syscall 1. Reserved for testing purposes.
+#define SYSNR_TEST1 0x1
 // ============================================================================= 

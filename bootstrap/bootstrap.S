@@ -217,6 +217,11 @@ ASM_FUNC_DEF32(bootstrap_main):
     // Run 64-bits tests once everything is initialized.
     call    run_tests64
 
+    // Initialize syscalls. This must be done after running the tests because
+    // the interrupt tests will try to register callback for all vectors
+    // including the INTERRUPT_SYSCALL_VEC.
+    call    init_syscall
+
     // We are now in long mode, hence paging is enabled (mandatory for long
     // mode), therefore we cannot access the physical memory containing the
     // loaded file. Map those frames now.
