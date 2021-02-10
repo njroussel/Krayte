@@ -4,11 +4,15 @@
 
 // Read the current value of the Time-Stamp counter.
 // @return: Current value of TSC on this cpu.
-extern uint64_t readTsc(void);
+extern "C" uint64_t readTsc(void);
 
 // Get the frequency of the Time-Stamp counter.
 // @return: Frequency of this cpu's TSC in Hz.
-extern uint64_t getTscFreq(void);
+extern "C" uint64_t getTscFreq(void);
+
+// Print out a NUL-terminated string to the serial console.
+// @param msg: The NUL-terminated string to print out.
+extern "C" void logSerial(char const * const msg);
 
 namespace Kr8 {
 // Abstraction for the VGA buffer residing in memory at address 0xB8000.
@@ -211,4 +215,5 @@ extern "C" void _start(Kr8::FrameBufferInfo const * const fbInfo) {
         uint16_t const x = fbInfo->width / 2;
         fb.putPixel(Kr8::FrameBuffer::Pos<uint16_t>(x, i), Kr8::FrameBuffer::Color(255, 255, 255));
     }
+    logSerial("Hello world in the serial console from the application\n");
 }

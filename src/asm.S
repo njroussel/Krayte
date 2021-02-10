@@ -13,6 +13,7 @@ readTsc:
 .set SYSCALL_INTERRUPT_VECTOR, 0x21
 // Syscall number for GET_TSC_FREQ.
 .set SYSNR_GET_TSC_FREQ, 0x2
+.set SYSNR_LOG_SERIAL, 0x3
 
 .section .text
 .code64
@@ -20,5 +21,14 @@ readTsc:
 .type   getTscFreq, @function
 getTscFreq:
     mov     rax, SYSNR_GET_TSC_FREQ
+    int     SYSCALL_INTERRUPT_VECTOR
+    ret
+
+.section .text
+.code64
+.global logSerial
+.type   logSerial, @function
+logSerial:
+    mov     rax, SYSNR_LOG_SERIAL
     int     SYSCALL_INTERRUPT_VECTOR
     ret

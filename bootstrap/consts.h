@@ -259,4 +259,6 @@
 #define SYSNR_TEST1         0x1
 // Syscall to get the TSC's frequency in Hz.
 #define SYSNR_GET_TSC_FREQ  0x2
+// Syscall to print a NUL-terminated string in the serial console.
+#define SYSNR_LOG_SERIAL    0x3
 // ============================================================================= 

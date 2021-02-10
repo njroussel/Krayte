@@ -42,6 +42,7 @@ SYSCALL_TABLE:
 .quad   0x0
 .quad   0x0
 .quad   do_get_tsc_freq
+.quad   do_log_serial
 SYSCALL_TABLE_END:
 
 // =============================================================================
@@ -135,4 +136,35 @@ ASM_FUNC_DEF64(syscall_callback):
 // =============================================================================
 ASM_FUNC_DEF64(do_get_tsc_freq):
     mov     rax, [TSC_FREQ]
+    ret
+
+// =============================================================================
+// Log a message to the serial console. This is the implementation of the
+// SYSNR_LOG_SERIAL syscall.
+// @param (RDI): The NUL-terminated string to be printed.
+// =============================================================================
+ASM_FUNC_DEF64(do_log_serial):
+    push    rbp
+    mov     rbp, rsp
+    push    rbx
+
+    // RBX = Pointer to next char to print.
+    mov     rbx, rdi
+
+    // Iterate over each char of the string and use putc_serial64 to print it
+    // out.
+    jmp     ._do_log_serial_loop_cond
+._do_log_serial_loop:
+    movzx   rdi, al
+    call    putc_serial64
+    
+    inc     rbx
+._do_log_serial_loop_cond:
+    // AL = next char to print.
+    mov     al, [rbx]
+    test    al, al
+    jnz     ._do_log_serial_loop
+
+    pop     rbx
+    leave
     ret
