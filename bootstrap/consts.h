@@ -187,35 +187,51 @@
 #define INTERRUPT_PIT_VEC   0x20
 
 // Offsets for the interrupt frame constructed by the generic interrupt handler.
+// (QWORD) R15 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R15_OFF     (0 * 0x8)
+// (QWORD) R14 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R14_OFF     (1 * 0x8)
+// (QWORD) R13 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R13_OFF     (2 * 0x8)
+// (QWORD) R12 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R12_OFF     (3 * 0x8)
+// (QWORD) R11 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R11_OFF     (4 * 0x8)
+// (QWORD) R10 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R10_OFF     (5 * 0x8)
+// (QWORD) R9 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R9_OFF      (6 * 0x8)
+// (QWORD) R8 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R8_OFF      (7 * 0x8)
 // (QWORD) RDI value at the time of the interrupt.
-#define INT_FRAME_SAVED_RDI_OFF     0x00
+#define INT_FRAME_SAVED_RDI_OFF     (8 * 0x8)
 // (QWORD) RSI value at the time of the interrupt.
-#define INT_FRAME_SAVED_RSI_OFF     0x08
+#define INT_FRAME_SAVED_RSI_OFF     (9 * 0x8)
 // (QWORD) RBP value at the time of the interrupt.
-#define INT_FRAME_SAVED_RBP_OFF     0x10
+#define INT_FRAME_SAVED_RBP_OFF     (10 * 0x8)
 // (QWORD) RBX value at the time of the interrupt.
-#define INT_FRAME_SAVED_RBX_OFF     0x18
+#define INT_FRAME_SAVED_RBX_OFF     (11 * 0x8)
 // (QWORD) RDX value at the time of the interrupt.
-#define INT_FRAME_SAVED_RDX_OFF     0x20
+#define INT_FRAME_SAVED_RDX_OFF     (12 * 0x8)
 // (QWORD) RCX value at the time of the interrupt.
-#define INT_FRAME_SAVED_RCX_OFF     0x28
+#define INT_FRAME_SAVED_RCX_OFF     (13 * 0x8)
 // (QWORD) RAX value at the time of the interrupt.
-#define INT_FRAME_SAVED_RAX_OFF     0x30
+#define INT_FRAME_SAVED_RAX_OFF     (14 * 0x8)
 // (QWORD) Vector of the interrupt.
-#define INT_FRAME_VECTOR_OFF        0x38
+#define INT_FRAME_VECTOR_OFF        (15 * 0x8)
 // (QWORD) Error code of the interrupt. For vector that do not push error code
 // or software interrupts this value is a placeholder.
-#define INT_FRAME_ERROR_CODE_OFF    0x40
+#define INT_FRAME_ERROR_CODE_OFF    (16 * 0x8)
 // (QWORD) RIP at the time of the interrupt.
-#define INT_FRAME_RIP_OFF           0x48
+#define INT_FRAME_RIP_OFF           (17 * 0x8)
 // (QWORD) CS at the time of the interrupt.
-#define INT_FRAME_CS_OFF            0x50
+#define INT_FRAME_CS_OFF            (18 * 0x8)
 // (QWORD) RFLAGS at the time of the interrupt.
-#define INT_FRAME_RFLAGS_OFF        0x58
+#define INT_FRAME_RFLAGS_OFF        (19 * 0x8)
 // (QWORD) RSP at the time of the interrupt.
-#define INT_FRAME_RSP_OFF           0x60
+#define INT_FRAME_RSP_OFF           (20 * 0x8)
 // (QWORD) SS at the time of the interrupt.
-#define INT_FRAME_SS_OFF            0x68
+#define INT_FRAME_SS_OFF            (21 * 0x8)
 // ============================================================================= 
 
 // ============================================================================= 

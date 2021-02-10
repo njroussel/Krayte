@@ -376,6 +376,14 @@ ASM_FUNC_DEF64(generic_handler):
     push    rbp
     push    rsi
     push    rdi
+    push    r8
+    push    r9
+    push    r10
+    push    r11
+    push    r12
+    push    r13
+    push    r14
+    push    r15
 
     // RBP = Interrupt frame.
     mov     rbp, rsp
@@ -383,7 +391,7 @@ ASM_FUNC_DEF64(generic_handler):
     // Step 3: Compute the vector number. This is explained in the file-level
     // comment.
     // RAX = Interrupt vector = ((ret_addr - handler_base) / 5) - 1.
-    mov     rax, [rsp + 7 * 8]
+    mov     rax, [rsp + 15 * 8]
     sub     rax, [HANDLERS_ARRAY]
     cqo
     mov     rcx, 5
@@ -417,6 +425,14 @@ ASM_FUNC_DEF64(generic_handler):
 
     // Interrupt has been handled, we are about to return to the interrputed
     // context. First restore GP registers.
+    pop     r15
+    pop     r14
+    pop     r13
+    pop     r12
+    pop     r11
+    pop     r10
+    pop     r9
+    pop     r8
     pop     rdi
     pop     rsi
     pop     rbp
