@@ -2,6 +2,14 @@
 // in the VGA buffer.
 #include <stdint.h>
 
+// Read the current value of the Time-Stamp counter.
+// @return: Current value of TSC on this cpu.
+extern uint64_t readTsc(void);
+
+// Get the frequency of the Time-Stamp counter.
+// @return: Frequency of this cpu's TSC in Hz.
+extern uint64_t getTscFreq(void);
+
 namespace Kr8 {
 // Abstraction for the VGA buffer residing in memory at address 0xB8000.
 class VGABuffer {
