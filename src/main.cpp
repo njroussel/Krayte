@@ -14,7 +14,6 @@ extern "C" uint64_t getTscFreq(void);
 // Print out a NUL-terminated string to the serial console.
 // @param msg: The NUL-terminated string to print out.
 extern "C" void logSerial(char const * const msg);
-
 namespace Kr8 {
 // Information on the VESA frame buffer.
 struct FrameBufferInfo {

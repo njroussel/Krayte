@@ -1,8 +1,9 @@
-# Rust
-target/
+# build
+build/
 
 # IDE
 *.code-workspace
+.vscode/
 
 *.img
 *.o
