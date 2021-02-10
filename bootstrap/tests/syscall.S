@@ -234,3 +234,26 @@ ASM_FUNC_DEF64(syscall_return_value_test_handler):
 // The value of RAX to be returned by the syscall_return_value_test_handler.
 syscall_return_value_test_expected_rax:
 .quad   0x0
+
+// ============================================================================= 
+// Test the SYSNR_GET_TSC_FREQ syscall.
+// ============================================================================= 
+ASM_FUNC_DEF64(syscall_get_tsc_freq_test):
+    push    rbp
+    mov     rbp, rsp
+
+    call    init_syscall
+
+    mov     rax, SYSNR_GET_TSC_FREQ
+    int     INTERRUPT_SYSCALL_VEC
+
+    cmp     rax, [TSC_FREQ]
+    sete    al
+    movzx   rax, al
+
+    push    rax
+    call    reset_syscall
+    pop     rax
+    leave
+    ret
+REGISTER_TEST64(syscall_get_tsc_freq_test)

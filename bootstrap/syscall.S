@@ -41,6 +41,7 @@
 SYSCALL_TABLE:
 .quad   0x0
 .quad   0x0
+.quad   do_get_tsc_freq
 SYSCALL_TABLE_END:
 
 // =============================================================================
@@ -125,4 +126,13 @@ ASM_FUNC_DEF64(syscall_callback):
 
     // Return to interrupted context.
     leave
+    ret
+
+// =============================================================================
+// Get the TSC's frequency in Hz. This is the implementaion of the
+// SYSNR_GET_TSC_FREQ syscall.
+// @return (RAX): The TSC's frequency.
+// =============================================================================
+ASM_FUNC_DEF64(do_get_tsc_freq):
+    mov     rax, [TSC_FREQ]
     ret

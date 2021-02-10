@@ -254,7 +254,9 @@
 //
 // Syscall numbers:
 // Test syscall 0. Reserved for testing purposes.
-#define SYSNR_TEST0 0x0
+#define SYSNR_TEST0         0x0
 // Test syscall 1. Reserved for testing purposes.
-#define SYSNR_TEST1 0x1
+#define SYSNR_TEST1         0x1
+// Syscall to get the TSC's frequency in Hz.
+#define SYSNR_GET_TSC_FREQ  0x2
 // ============================================================================= 
