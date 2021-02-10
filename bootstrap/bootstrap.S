@@ -170,8 +170,7 @@ ASM_FUNC_DEF32(bootstrap_main):
 
     INFO32("Bootstrap main started\n")
 
-    INFO32("Running tests\n")
-    call    run_tests
+    call    run_tests32
 
     call    init_mem_map
     call    init_frame_allocator
@@ -214,6 +213,9 @@ ASM_FUNC_DEF32(bootstrap_main):
     // Compute or calibrate the TSC's frequency. This must be done after
     // initializing the I/O APIC and LAPIC as it might use the PIT to calibrate.
     call    init_tsc
+
+    // Run 64-bits tests once everything is initialized.
+    call    run_tests64
 
     // We are now in long mode, hence paging is enabled (mandatory for long
     // mode), therefore we cannot access the physical memory containing the
