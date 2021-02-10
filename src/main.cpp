@@ -1,6 +1,7 @@
 // Simple stub file to test the project. For now this simply outputs Hello World
 // in the VGA buffer.
 #include <stdint.h>
+#include <type_traits>
 
 // Read the current value of the Time-Stamp counter.
 // @return: Current value of TSC on this cpu.
@@ -15,66 +16,6 @@ extern "C" uint64_t getTscFreq(void);
 extern "C" void logSerial(char const * const msg);
 
 namespace Kr8 {
-// Abstraction for the VGA buffer residing in memory at address 0xB8000.
-class VGABuffer {
-    public:
-        // Create an instance of VGABuffer.
-        // @param startCursor: The starting position of the cursor.
-        VGABuffer(uint16_t const startCursor) : cursor(startCursor) {}
-
-        // Print out a character in the VGA buffer.
-        // @param c: The char to be printed.
-        void putc(char const c) {
-            if (c == '\n') {
-                newLine();
-            } else {
-                bufAddr[cursor] = (7 << 8) | c;
-                cursor++;
-            }
-        } 
-
-        // Print out a string in the VGA buffer.
-        // @param str: The string to be printed.
-        void operator<<(char const * cstr) {
-            while (*cstr) {
-                putc(*(cstr++));
-            }
-        }
-
-    private:
-        // Address of the memory-mapped VGA buffer.
-        uint16_t * const bufAddr = reinterpret_cast<uint16_t*>(0xB8000);
-        // Width of the VGA buffer in number of characters.
-        uint8_t const bufWidth = 80;
-        // Height of the VGA buffer in number of characters.
-        uint8_t const bufHeight = 25;
-        // Current position of the cursor.
-        uint16_t cursor;
-
-        // Handle a new line character.
-        void newLine(void) {
-            if (cursor / bufWidth == bufHeight - 1) {
-                // We are at the bottom of the buffer, scroll up once and put
-                // the cursor back to the beginning of the last line.
-                scrollUp();
-                cursor = bufWidth * (bufHeight - 1);
-            } else {
-                cursor += bufWidth;
-            }
-        }
-
-        // Scroll up the lines of the buffer once.
-        void scrollUp(void) {
-            uint16_t const * src = bufAddr + bufWidth;
-            uint16_t * dst = bufAddr;
-            for (uint16_t i = 0; i < bufWidth * bufHeight; ++i) {
-                *dst = *src;
-                dst++;
-                src++;
-            }
-        }
-};
-
 // Information on the VESA frame buffer.
 struct FrameBufferInfo {
     // Number of bytes per-line. Note that this is not necessarily "width *
@@ -199,6 +140,72 @@ uint16_t FrameBuffer::Pos<float>::col(struct FrameBufferInfo const * const fbInf
     return (uint16_t)(x * fbInfo->width);
 }
 
+// Simple implementation of an output stream printing to the serial console.
+class Ostream {
+    public:
+        // Generic printing operator.
+        // @param value: The value to be printed.
+        // @return: A reference on the current Ostream. This is used to chain
+        // multiple operator<<s together.
+        template<typename T>
+        Ostream& operator<<(T const value) {
+            if constexpr (std::is_integral<T>::value) {
+                outputInteger(value);
+            } else if constexpr (std::is_floating_point<T>::value) {
+                outputFloatingPoint(value);
+            }
+            return *this;
+        }
+
+    private:
+        // Print an integer in serial output.
+        // @param integer: The value of the integer.
+        template<typename T>
+        void outputInteger(T const& integer) {
+            T value = integer;
+            if (std::is_signed<T>() && value < 0) {
+                value = -value;
+            }
+
+            // 64-bit {u}ints produce 20 digits max in base 10.
+            char buf[22] = {'0'};
+            buf[21] = '\0';
+
+            uint8_t i = 0;
+            for (; value; ++i, value /= 10) {
+                char const digit = '0' + (value % 10);
+                buf[20 - i] = digit;
+            }
+
+            char const * const strValue = buf + 20 - i + 1;
+            *this << strValue;
+        }
+
+        // Print a floating point in the serial output.
+        // @param fp: The value of the floating point.
+        template<typename T>
+        void outputFloatingPoint(T const& fp) {
+            // TODO
+        }
+};
+
+// Specialization for NUL-terminated char strings.
+template<>
+Ostream& Ostream::operator<<<char const*>(char const * const str) {
+    logSerial(str);
+    return *this;
+}
+
+// Specialization for single characters.
+template<>
+Ostream& Ostream::operator<<<char>(char const c) {
+    char buf[2] = {c, '\0'};
+    return (*this << buf);
+}
+
+// Singleton instance to print in serial console.
+Ostream sout;
+char const * const endl = "\n";
 }
 
 // The entry point name is expected to be _start. The extern "C" is here to
@@ -215,5 +222,9 @@ extern "C" void _start(Kr8::FrameBufferInfo const * const fbInfo) {
         uint16_t const x = fbInfo->width / 2;
         fb.putPixel(Kr8::FrameBuffer::Pos<uint16_t>(x, i), Kr8::FrameBuffer::Color(255, 255, 255));
     }
-    logSerial("Hello world in the serial console from the application\n");
+
+    Kr8::sout << "Hello world in the serial console using syscall" << Kr8::endl;
+
+    uint64_t const tsc_freq = getTscFreq();
+    Kr8::sout << "TSC frequency = " << tsc_freq << " Hz" << Kr8::endl;
 }

@@ -10,7 +10,7 @@ CC=g++
 # 	-fno-rtti: No runtime support (at least yet).
 # 	-mno-red-zone: Disable red zone on the stack (128 bytes under current RSP).
 # 	This is because the kernel does not switch stacks on interrupts.
-CPPFLAGS=-ffreestanding -static -nostdlib -fno-exceptions -fno-rtti -mno-red-zone
+CPPFLAGS=-ffreestanding -static -nostdlib -fno-exceptions -fno-rtti -mno-red-zone -std=c++17
 
 SRC_DIR=./
 SOURCE_FILES:=$(shell find $(SRC_DIR) -type f -name "*.cpp")
