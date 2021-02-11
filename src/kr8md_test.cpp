@@ -57,9 +57,13 @@ uint mandelbrot_normal(float c_re, float c_im, unsigned int max_iterations)
     for (i = 0; i < max_iterations; ++i)
     {
         if (z_re * z_re + z_im * z_im > 4.)
+        {
             break;
+        }
+
         float new_re = z_re * z_re - z_im * z_im;
         float new_im = 2.f * z_re * z_im;
+
         z_re = c_re + new_re;
         z_im = c_im + new_im;
     }
@@ -168,6 +172,8 @@ int main(void)
     auto loop_duration_pak = measure_runtime([&] { loop_paked(n, vec_a, vec_b, pvec_c); });
     bool loop_correct = std::equal(&vec_c[0], &vec_c[n], &pvec_c[0]);
 
+    delete[] vec_a;
+    delete[] vec_b;
     delete[] vec_c;
     delete[] pvec_c;
 
