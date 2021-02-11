@@ -53,17 +53,8 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-if(CMAKE_BUILD_TYPE MATCHES RELEASE)
-    add_executable(Krayte
-        # Source files
-        src/main.cpp
-        src/asm.S
-    )
-elseif(CMAKE_BUILD_TYPE MATCHES DEBUG)
-
-    add_executable(Krayte
-        # Header files
-        # Source files
-        src/kr8md_test.cpp
-    )
-endif()
+add_executable(Krayte
+    # Source files
+    src/kr8md_test.cpp
+    src/asm.S
+)
