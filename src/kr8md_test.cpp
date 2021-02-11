@@ -1,21 +1,21 @@
 #include <stdint.h>
-#include <random>
 #include <algorithm>
-#include <chrono>
-#include <iostream>
 
 #include <krayte/kr8md/kr8md.h>
 #include <krayte/kr8md/kr8md_std_helpers.h>
+#include <krayte/utils/ostream.h>
+#include <krayte/utils/chrono.h>
+#include <krayte/utils/string.h>
 
 using namespace kr8md;
 
 template <class T>
 auto measure_runtime(T func)
 {
-    auto begin = std::chrono::high_resolution_clock::now();
+    auto start = kr8::Chrono::now();
     func();
-    auto end = std::chrono::high_resolution_clock::now();
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
+    auto end = kr8::Chrono::now();
+    return kr8::Chrono::duration(start, end);
 }
 
 void loop_normal(size_t n, float const *const a, float const *const b, float *const dst)
@@ -145,61 +145,65 @@ void mandelbrot_loop_pak(uint *dst, int width = 1080, int height = 720,
     }
 }
 
+template<typename T, typename L>
+void transform(T const * start, T const * end, T* out, L const lambda) {
+    while (start != end) {
+        *out = lambda(*start);
+        ++start;
+        ++out;
+    }
+}
+
+// We do not have dynamic allocation yet. Hence put all arrays in the .BSS.
+static size_t const n = 8000;
+static float vec_a[n];
+static float vec_b[n];
+static float vec_c[n];
+static float pvec_c[n];
+static size_t const width = 1920;
+static size_t const height = 1080;
+static size_t const size = width * height;
+static uint out_mandel[size];
+static uint pout_mandel[size];
+
 int main(void)
 {
+    auto const startMain = kr8::Chrono::now();
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distribution(1, 100);
-    auto sample_one = [&](auto _) { return distribution(gen); };
-
-    size_t n = 80000000;
-
-    float *vec_a = new float[n];
-    float *vec_b = new float[n];
+    // The poor man's random generator.
+    auto sample_one = [&](auto _) { 
+        auto const now = kr8::Chrono::now();
+        uint64_t const duration = kr8::Chrono::duration(startMain, now);
+        return (float)duration;
+    };
 
     std::transform(&vec_a[0], &vec_a[n], &vec_a[0], sample_one);
     std::transform(&vec_b[0], &vec_b[n], &vec_b[0], sample_one);
-
-    float *vec_c = new float[n];
-    float *pvec_c = new float[n];
 
     auto loop_duration_normal = measure_runtime([&] { loop_normal(n, vec_a, vec_b, vec_c); });
     auto loop_duration_pak = measure_runtime([&] { loop_paked(n, vec_a, vec_b, pvec_c); });
     bool loop_correct = std::equal(&vec_c[0], &vec_c[n], &pvec_c[0]);
 
-    delete[] vec_c;
-    delete[] pvec_c;
-
-    size_t width = 1920;
-    size_t height = 1080;
-    size_t size = width * height;
-    uint *out_mandel = new uint[size];
-    uint *pout_mandel = new uint[size];
-
     auto mandelbrot_duration_normal = measure_runtime([&] { mandelbrot_loop_normal(out_mandel, width, height); });
     auto mandelbrot_duration_pak = measure_runtime([&] { mandelbrot_loop_pak(pout_mandel, width, height); });
     bool mandelbrot_correct = std::equal(&out_mandel[0], &out_mandel[size], &pout_mandel[0]);
 
-    delete[] out_mandel;
-    delete[] pout_mandel;
-
     // -------
-    std::cout << "max kr8md width: " << KR8MD_MAX_VEC_REGISTER_SIZE << std::endl;
-    std::cout << "sizeof(pfloat): " << sizeof(pfloat) << std::endl;
-    std::cout << std::endl;
+    kr8::sout << "max kr8md width: " << KR8MD_MAX_VEC_REGISTER_SIZE << kr8::endl;
+    kr8::sout << "sizeof(pfloat): " << sizeof(pfloat) << kr8::endl;
+    kr8::sout << kr8::endl;
 
-    std::cout << "Basic arithmetic on two vectors (size " << n << "):" << std::endl;
-    std::cout << "Duration normal: " << loop_duration_normal << std::endl;
-    std::cout << "Duration pak: " << loop_duration_pak << std::endl;
-    std::cout << "Correctness: " << loop_correct << std::endl;
-    std::cout << std::endl;
+    kr8::sout << "Basic arithmetic on two vectors (size " << n << "):" << kr8::endl;
+    kr8::sout << "Duration normal: " << loop_duration_normal << kr8::endl;
+    kr8::sout << "Duration pak: " << loop_duration_pak << kr8::endl;
+    kr8::sout << "Correctness: " << loop_correct << kr8::endl;
+    kr8::sout << kr8::endl;
 
-    std::cout << "Mabdelbrot fracal (size " << width << "x" << height << "):" << std::endl;
-    std::cout << "Duration normal: " << mandelbrot_duration_normal << std::endl;
-    std::cout << "Duration pak: " << mandelbrot_duration_pak << std::endl;
-    std::cout << "Correctness: " << mandelbrot_correct << std::endl;
-    std::cout << std::endl;
+    kr8::sout << "Mabdelbrot fracal (size " << width << "x" << height << "):" << kr8::endl;
+    kr8::sout << "Duration normal: " << mandelbrot_duration_normal << kr8::endl;
+    kr8::sout << "Duration pak: " << mandelbrot_duration_pak << kr8::endl;
+    kr8::sout << "Correctness: " << mandelbrot_correct << kr8::endl;
+    kr8::sout << kr8::endl;
 
     return 0;
 }

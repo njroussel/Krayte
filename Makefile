@@ -4,11 +4,11 @@
 # 	- run: Build Krayte for baremetal and run it in Qemu.
 # 	- runs: Same as `run` but pass the -S option to Qemu.
 
-# Path to the application to bake into the disk.
-APP_PATH=build/Krayte
-
 # Directory used for the CMake build.
 CMAKE_BUILD_DIR=build
+
+# Path to the application to bake into the disk.
+APP_PATH=$(CMAKE_BUILD_DIR)/Krayte
 
 # Path to the binary image containing the entire bootstrap code and data.
 BOOTSTRAP_IMG_PATH=bootstrap/bootstrap.img

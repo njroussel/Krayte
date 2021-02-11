@@ -1,12 +1,12 @@
 #pragma once
 
-#include <iostream>
 #include <krayte/kr8md/kr8md.h>
+#include <krayte/utils/ostream.h>
 
 namespace kr8md
 {
     template <typename T, size_t W>
-    std::ostream &operator<<(std::ostream &os, const Pak<T, W> &pak)
+    kr8::Ostream &operator<<(kr8::Ostream &os, const Pak<T, W> &pak)
     {
         os << "{";
         for (size_t i = 0; i < W; ++i)
