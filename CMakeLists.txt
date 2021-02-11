@@ -24,22 +24,34 @@ message("Build type: ${CMAKE_BUILD_TYPE}")
 # 	-fno-rtti: No runtime support (at least yet).
 # 	-mno-red-zone: Disable red zone on the stack (128 bytes under current RSP).
 # 	This is because the kernel does not switch stacks on interrupts.
+#   -Wl,-emain: Tell the linker that the entry point is named "main". This is
+#   required in freestanding.
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffreestanding")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -nostdlib")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-exceptions")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mno-red-zone")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wl,-emain")
 
 # Good practices
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wshadow=compatible-local")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wconversion")
 
+# In DEBUG add the KRAYTE_ALLOW_STD macro so that the cpp code can check if it
+# is allowed to use std.
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DKRAYTE_ALLOW_STD")
+
 # Enable all instruction subsets supported by the local machine
 # TODO: Create  flags for specific instructions sets
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+
+include_directories(
+    # Include files
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 if(CMAKE_BUILD_TYPE MATCHES RELEASE)
     add_executable(Krayte
@@ -48,10 +60,6 @@ if(CMAKE_BUILD_TYPE MATCHES RELEASE)
         src/asm.S
     )
 elseif(CMAKE_BUILD_TYPE MATCHES DEBUG)
-    include_directories(
-        # Include files
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
 
     add_executable(Krayte
         # Header files
