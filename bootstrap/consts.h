@@ -56,6 +56,9 @@
 // ============================================================================= 
 // Frame allocator consts.
 #define PAGE_SIZE 4096
+// Indicate failure during the frame allocation. Any value that is not page
+// aligned works.
+#define NO_FRAME  0xFFFFFFFF
 
 // The following are the offsets used for the nodes of the allocator's linked
 // list.
@@ -119,4 +122,145 @@
 #define METADATA_START_SEC_OFF  0x4
 // (NUL-terminated string) The name of the file.
 #define METADATA_NAME_OFF       0x8
+// ============================================================================= 
+
+// ============================================================================= 
+// ACPI offsets and constants.
+// Root System Descriptor Pointer (RSDP) offsets:
+// (QWORD) Signature of the table, must contain "RSD PTR ".
+#define ACPI_RSDP_SIGNATURE_OFF 0x00
+// (BYTE) Checksum of the RSDP.
+#define ACPI_RSDP_CHECKSUM_OFF  0x08
+// (6 BYTES) OEM identifier.
+#define ACPI_RSDP_OEMID_OFF     0x09
+// (BYTE) Revision. 0 -> ACPI v1, 1 -> ACPI v2 to v6.1.
+#define ACPI_RSDP_REVISION_OFF  0x0F
+// (DWORD) Linear Address of the RSDT.
+#define ACPI_RSDP_RSDT_ADDR_OFF 0x10
+// Size of a RSDP for ACPI v1.
+#define ACPI_RSDP_SIZE  0x14
+
+// System Descriptor Table (SDT) header offsets:
+// (4 BYTES) Signature of the SDT.
+#define ACPI_SDT_HDR_SIGNATURE_OFF          0x0
+// (DWORD) Length of the SDT in bytes, including the header.
+#define ACPI_SDT_HDR_LENGTH_OFF             0x4
+// (BYTE) Revision of the SDT.
+#define ACPI_SDT_HDR_REVISION_OFF           0x8
+// (BYTE) Checksum so that the sum of all bytes has its lower byte to 0x0.
+#define ACPI_SDT_HDR_CHECKSUM_OFF           0x9
+// (6 BYTES) OEM ID String.
+#define ACPI_SDT_HDR_OEMID_OFF              0xA
+// (8 BYTES) OEM ID String bis.
+#define ACPI_SDT_HDR_OEMTABLEID_OFF         0x10
+// (DWORD) OEM Revision.
+#define ACPI_SDT_HDR_OEMREVISION_OFF        0x18
+// (DWORD) Creator ID.
+#define ACPI_SDT_HDR_CREATORID_OFF          0x1C
+// (DWORD) Creator Revision.
+#define ACPI_SDT_HDR_CREATORREVISION_OFF    0x20
+// Size of a SDT header.
+#define ACPI_SDT_HDR_SIZE ACPI_SDT_HDR_CREATORREVISION_OFF + 4
+
+// Offsets for SDT with signature == "APIC", those tables are also known as
+// Multiple APIC Description Table (MADT). An MADT starts with an SDT header
+// followed by the fields:
+// (DWORD) Physical address of the LAPIC.
+#define ACPI_MADT_LAPIC_ADDR_OFF    0x24
+#define ACPI_MADT_ENTRIES_OFF       0x2C
+// The MADT then contains an arbitrary number of variable sized entries. Each
+// entry starts with a header:
+// (BYTE) Type of the entry. See acpi.S for more info about the different types.
+#define ACPI_MADT_ENTRY_TYPE_OFF    0x0
+// (BYTE) Length of the entry in byte, including the header.
+#define ACPI_MADT_ENTRY_LENGTH_OFF  0x1
+// ============================================================================= 
+
+// ============================================================================= 
+// Interrupt related constants.
+// The size of the IDT in number of entries, if this value is X then the IDT
+// will handle interrupts vectors 0, 1, ..., X - 1.
+#define INTERRUPT_IDT_SIZE  0x30
+
+// Vectors used in this project:
+// Vector used for the redirected PIT IRQs.
+#define INTERRUPT_PIT_VEC       0x20
+// Vector used for syscalls through software interrupts.
+#define INTERRUPT_SYSCALL_VEC   0x21
+
+// Offsets for the interrupt frame constructed by the generic interrupt handler.
+// (QWORD) R15 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R15_OFF     (0 * 0x8)
+// (QWORD) R14 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R14_OFF     (1 * 0x8)
+// (QWORD) R13 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R13_OFF     (2 * 0x8)
+// (QWORD) R12 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R12_OFF     (3 * 0x8)
+// (QWORD) R11 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R11_OFF     (4 * 0x8)
+// (QWORD) R10 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R10_OFF     (5 * 0x8)
+// (QWORD) R9 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R9_OFF      (6 * 0x8)
+// (QWORD) R8 value at the time of the interrupt.
+#define INT_FRAME_SAVED_R8_OFF      (7 * 0x8)
+// (QWORD) RDI value at the time of the interrupt.
+#define INT_FRAME_SAVED_RDI_OFF     (8 * 0x8)
+// (QWORD) RSI value at the time of the interrupt.
+#define INT_FRAME_SAVED_RSI_OFF     (9 * 0x8)
+// (QWORD) RBP value at the time of the interrupt.
+#define INT_FRAME_SAVED_RBP_OFF     (10 * 0x8)
+// (QWORD) RBX value at the time of the interrupt.
+#define INT_FRAME_SAVED_RBX_OFF     (11 * 0x8)
+// (QWORD) RDX value at the time of the interrupt.
+#define INT_FRAME_SAVED_RDX_OFF     (12 * 0x8)
+// (QWORD) RCX value at the time of the interrupt.
+#define INT_FRAME_SAVED_RCX_OFF     (13 * 0x8)
+// (QWORD) RAX value at the time of the interrupt.
+#define INT_FRAME_SAVED_RAX_OFF     (14 * 0x8)
+// (QWORD) Vector of the interrupt.
+#define INT_FRAME_VECTOR_OFF        (15 * 0x8)
+// (QWORD) Error code of the interrupt. For vector that do not push error code
+// or software interrupts this value is a placeholder.
+#define INT_FRAME_ERROR_CODE_OFF    (16 * 0x8)
+// (QWORD) RIP at the time of the interrupt.
+#define INT_FRAME_RIP_OFF           (17 * 0x8)
+// (QWORD) CS at the time of the interrupt.
+#define INT_FRAME_CS_OFF            (18 * 0x8)
+// (QWORD) RFLAGS at the time of the interrupt.
+#define INT_FRAME_RFLAGS_OFF        (19 * 0x8)
+// (QWORD) RSP at the time of the interrupt.
+#define INT_FRAME_RSP_OFF           (20 * 0x8)
+// (QWORD) SS at the time of the interrupt.
+#define INT_FRAME_SS_OFF            (21 * 0x8)
+// ============================================================================= 
+
+// ============================================================================= 
+// Programmable Interval Timer (PIT) constants.
+// This is the base frequency of the crystal oscillator of the PIT.
+#define PIT_BASE_FREQ   1193182
+// Choose a reload value so that PIT_FREQ % RELOAD_VAL == 0 as to avoid rounding
+// errors! 29102 is the biggest divisor of the PIT frequency.
+#define PIT_RELOAD_VAL  29102
+// This is the divided frequency. THIS IS THE DROID YOU ARE LOOKING FOR!!
+// Throughout this project, the PIT is ALWAYS running at this frequency. DO NOT
+// use PIT_BASE_FREQ in computations!
+#define PIT_FREQ        (PIT_BASE_FREQ / PIT_RELOAD_VAL)
+// ============================================================================= 
+
+// ============================================================================= 
+// Syscall constants.
+//
+// Syscall numbers:
+// Test syscall 0. Reserved for testing purposes.
+#define SYSNR_TEST0         0x0
+// Test syscall 1. Reserved for testing purposes.
+#define SYSNR_TEST1         0x1
+// Syscall to get the TSC's frequency in Hz.
+#define SYSNR_GET_TSC_FREQ  0x2
+// Syscall to print a NUL-terminated string in the serial console.
+#define SYSNR_LOG_SERIAL    0x3
+// Syscall to alloc/dealloc heap memory.
+#define SYSNR_SBRK          0x4
 // ============================================================================= 

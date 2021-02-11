@@ -177,138 +177,155 @@ ASM_FUNC_DEF32(init_frame_allocator):
     ret
 
 // =============================================================================
-// Get a free physical frame. Since this routine is for 32-bit mode it will
-// return a frame under 4GiB.
-// @return (EAX) Physical address of the allocated frame.
+// Allocate multiple contiguous physical frames at once.
+// @param N: The number of physical frames to allocate. This must be under 2^20.
+// @return (EAX): The address of the first frame allocated. If no frame can be
+// allocated, this routine will return NO_FRAME.
 // =============================================================================
-ASM_FUNC_DEF32(allocate_frame32):
+ASM_FUNC_DEF32(allocate_n_frames32):
     push    ebp
     mov     ebp, esp
-    push    ebx
-    push    esi
 
+    // Local var:
+    //  EBP - 0x8: (QWORD) requested size in a QWORD.
+    push    0x0
+    push    [ebp + 0x8]
+
+    // Check N against the maximum possible.
+    cmp     DWORD PTR [ebp + 0x8], (1 << 20)
+    jb      0f
+    PANIC32("allocate_n_frames32: N is too big!\n")
+0:
+
+    // Check that the head of the linked list is not above 4GiB.
     cmp     DWORD PTR [FRAME_ALLOC_HEAD + 4], 0x0
     je      0f
-    PANIC32("First node is above 4GiB\n")
+    PANIC32("allocate_n_frames32: First node in linked list is above 4GiB\n")
 0:
 
-    // EBX = Pointer on the head node.
+    push    ebx
+    push    edi
+    push    esi
+
+    // Traverse the linked list to find a group containing enough frames.
+    // EBX = Pointer on current group.
     mov     ebx, [FRAME_ALLOC_HEAD]
-
-    // Assert that the start address is < 4GiB. We could instead look at the
-    // next node, but then it would make things more complicated if we need to
-    // remove it. By doing this way we can only remove the head of the list
-    // which is simpler.
+    // EDI = Pointer on the next pointer of the previous node.
+    lea     edi, [FRAME_ALLOC_HEAD]
+.alloc_n_loop:
+    // Check if the base addres of the current group is above 4GiB.
     cmp     DWORD PTR [ebx + NODE_ADDR_OFF + 4], 0x0
-    je      0f
-    PANIC32("First node has start address above 4GiB\n")
-0:
+    jne     .alloc_n_next
 
-    // Assert that the size is > 0.
-    cmp     DWORD PTR [ebx + NODE_SIZE_OFF + 4], 0x0
-    jne     0f
-    cmp     DWORD PTR [ebx + NODE_SIZE_OFF], 0x0
-    jne     0f
-    // Size is zero. This should never happen.
-    PANIC32("Element of allocator's linked list has a size of 0\n")
-0:
-
-    // ESI = Address of the allocated frame.
-    mov     esi, [ebx + NODE_ADDR_OFF]
-
-    // Increase start address by PAGE_SIZE.
-    push    0x0
-    push    PAGE_SIZE
-    push    esp
-    lea     eax, [ebx + NODE_ADDR_OFF]
-    push    eax
-    push    eax
-    call    add64
-    add     esp, 0x14
-
-    // Decrease size by 1. 
-    push    0x0
-    push    0x1
-    push    esp
+    // Node starts under 4GiB and thus is available for 32-bit frame allocation.
+    // Check the size of the current group against the requested size.
     lea     eax, [ebx + NODE_SIZE_OFF]
     push    eax
+    lea     eax, [ebp - 0x8]
+    push    eax
+    call    cmp64
+    add     esp, 0x8
+    // If EAX == ARITH64_ABOVE then the requested size is bigger than the
+    // current group. This will not work, try the next group.
+    cmp     eax, ARITH64_ABOVE
+    je      .alloc_n_next
+
+    // The current group is big enough to perform the allocation. Now make sure
+    // that the base address + the size does not go over the 4GiB limit. Since
+    // we know that the top 32-bit of the base address are 0 we can simply add
+    // the size to the lower 32-bit and check the Carry Flag. If CF is set then
+    // the region goes over 4GiB and therefore cannot be used for this
+    // allocation.
+    // EAX = Address of the last byte of the allocation.
+    mov     eax, [ebx + NODE_ADDR_OFF]
+    mov     ecx, [ebp + 0x8]
+    shl     ecx, 12
+    // Dec here because we want the address of the last valid byte.
+    dec     ecx
+    add     eax, ecx
+    jc      .alloc_n_next
+
+    // This group passed all the checks, we can proceed with the allocation.
+    // ESI = Start address of the allocated frames = base address of the group.
+    // Once again this address is below 4GiB hence we only load the first
+    // 32-bits.
+    mov     esi, [ebx + NODE_ADDR_OFF]
+
+    // Update the base address of the group by advancing it by N * PAGE_SIZE.
+    lea     eax, [ebp - 0x8]
+    shl     DWORD PTR [eax], 12
+    push    eax
+    lea     eax, [ebx + NODE_ADDR_OFF]
+    push    eax
+    // In-place update.
+    push    eax
+    call    add64
+    add     esp, 0xC
+    shr     DWORD PTR [ebp - 0x8], 12
+
+    // Update the size of the group.
+    lea     eax, [ebp - 0x8]
+    push    eax
+    lea     eax, [ebx + NODE_SIZE_OFF]
+    push    eax
+    // Update in place.
     push    eax
     call    sub64
-    add     esp, 4
-    // Keep the same arg and compare the current size with 0x1
-    call    cmp64
-    add     esp, 0x10
+    add     esp, 0xC
 
-    cmp     eax, ARITH64_BELOW
-    jne     .alloc_done
+    // Check if size of group is now zero.
+    cmp     DWORD PTR [ebx + NODE_SIZE_OFF + 4], 0x0
+    jne     .alloc_n_done
+    cmp     DWORD PTR [ebx + NODE_SIZE_OFF], 0x0
+    jne     .alloc_n_done
 
-    // Group is empty, remove it from the linked-list.
-    mov     eax, [ebx + NODE_NEXT_OFF + 4]
-    mov     [FRAME_ALLOC_HEAD + 4], eax
+    // Size is zero, we need to remove the group. Update the next pointer of the
+    // previous node to point to the next node of the current one.
     mov     eax, [ebx + NODE_NEXT_OFF]
-    mov     [FRAME_ALLOC_HEAD], eax
-    
-.alloc_done:
-    // EBX = Address of the freshly allocated frame.
-    mov     eax, esi
+    mov     [edi], eax
+    jmp     .alloc_n_done
 
+.alloc_n_next:
+    // Traverse the linked list.
+    cmp     DWORD PTR [ebx + NODE_NEXT_OFF + 4], 0x0
+    je      0f
+    PANIC32("allocate_n_frames32: Node of linked list above 4GiB\n")
+0:
+
+    lea     edi, [ebx + NODE_NEXT_OFF]
+    mov     ebx, [ebx + NODE_NEXT_OFF]
+
+    test    ebx, ebx
+    jnz     .alloc_n_loop
+    // Reached the end of the linked list and couldn't find a suitable group.
+    // The allocation failed.
+    mov     esi, NO_FRAME
+
+.alloc_n_done:
+    // Allocation is done, ESI points to the start of the allocated physical
+    // RAM.
+    mov     eax, esi
     pop     esi
+    pop     edi
     pop     ebx
+
+    // Cleanup local var(s).
+    add     esp, 8
+
     leave
     ret
 
 // =============================================================================
-// Allocate N contiguous frames.
-// @param N : The number of frames.
-// @return (EAX) The address of the first frame of the contiguous region.
-// FIXME: This is an extremely naive implementation that assumes the first group
-// of free frame contains at least N frames. This is ok in practice because the
-// first group is at 1MiB (assuming the BIOS mem map is sorted) and there is a
-// lot of free memory starting at 1MiB.
+// Get a free physical frame. Since this routine is for 32-bit mode it will
+// return a frame under 4GiB. This is equivalent to call allocate_n_frames32
+// with N = 1.
+// @return (EAX): The address of frame allocated. If no frame can be allocated,
+// this routine will return NO_FRAME.
 // =============================================================================
-ASM_FUNC_DEF32(allocate_contiguous_frames32):
-    push    ebp
-    mov     ebp, esp
-    push    ebx
-    push    edi
-
-    // EBX = Addr of last allocated frame.
-    xor     ebx, ebx
-    // EDI = Add of first frame.
-    xor     edi, edi
-    // ECX = Number of frames.
-    mov     ecx, [ebp + 0x8]
-
-.alloc_cont_loop:
-    push    ecx
-
-    call    allocate_frame32
-
-    // ECX = Addr of last frame.
-    mov     ecx, ebx
-    // Update addr of last frame.
-    mov     ebx, eax
-
-    // If this is the first iteration set EDI and skip the comparison.
-    test    edi, edi
-    jnz     0f
-    mov     edi, eax
-    jmp     .alloc_cont_loop_next
-0:
-    // Not first iteration, make sure EAX - ECX == PAGE_SIZE.
-    sub     eax, ecx
-    cmp     eax, PAGE_SIZE
-    je      .alloc_cont_loop_next
-    PANIC32("Could not allocate contiguous frames for ELF file\n") 
-
-.alloc_cont_loop_next:
-    pop     ecx
-    loop    .alloc_cont_loop
-
-    mov     eax, edi
-    pop     edi
-    pop     ebx
-    leave
+ASM_FUNC_DEF32(allocate_frame32):
+    push    0x1
+    call    allocate_n_frames32
+    add     esp, 4
     ret
 
 // =============================================================================

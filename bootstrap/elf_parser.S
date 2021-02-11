@@ -6,6 +6,18 @@
 
 .intel_syntax   noprefix
 
+.section .data
+// FIXME: Since we only have a single process for now this is where we store the
+// program break.
+// The program break indicate the lowest address of the heap.
+.global PROGRAM_BREAK
+PROGRAM_BREAK:
+.quad   0x0
+// The original program break. We cannot go under this value.
+.global ORIG_PROGRAM_BREAK
+ORIG_PROGRAM_BREAK:
+.quad   0x0
+
 // Offsets of different fields (those that we use) of a 64-bit ELF header.
 .set ELF_HEADER_SIZE, 0x40
 // Magic number.
@@ -107,7 +119,7 @@ ASM_FUNC_DEF64(check_elf):
 .set P_FILESZ, 0x20
 // Size of the segment in virtual memory. If this is bigger than P_FILESZ then
 // any additional bytes after the initialized content should be 0.
-.set P_MEMSZ, 0x20
+.set P_MEMSZ, 0x28
 // Size of a Program Header Table entry in bytes.
 .set PHENTSIZE, 0x38
 
@@ -190,12 +202,26 @@ copy:
     xor     al, al
     mov     rcx, [rbx + P_MEMSZ]
     sub     rcx, [rbx + P_FILESZ]
-    rep     movsb
+    rep     stosb
     jmp     .process_done
 
 .memsz_zero:
     WARN64("Empty segment in ELF file\n")
 .process_done:
+
+    // Update the program break.
+    mov     rax, [rbx + P_VADDR]
+    add     rax, [rbx + P_MEMSZ]
+    cmp     rax, [PROGRAM_BREAK]
+    jbe     0f
+    // The segment went above PROGRAM_BREAK. Update it.
+    // Make sure the program break is page aligned.
+    and     rax, ~(PAGE_SIZE - 1)
+    add     rax, PAGE_SIZE
+    mov     [PROGRAM_BREAK], rax
+    mov     [ORIG_PROGRAM_BREAK], rax
+0:
+
     pop     r13
     pop     r12
     pop     rbx
@@ -338,6 +364,10 @@ ASM_FUNC_DEF64(parse_elf_from_ram):
     call    parse_prog_header_table
 
     INFO64("Program Header Table parsed\n")
+
+    push    [PROGRAM_BREAK]
+    INFO64("Program break is @ %q\n")
+    add     esp, 8
 
     mov     rax, [rbx + E_ENTRY]
 

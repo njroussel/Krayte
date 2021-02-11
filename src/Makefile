@@ -8,11 +8,14 @@ CC=g++
 # 	-nostdlib: Same as -static.
 # 	-fno-exceptions: Exceptions are not supported since they required a library.
 # 	-fno-rtti: No runtime support (at least yet).
-CPPFLAGS=-ffreestanding -static -nostdlib -fno-exceptions -fno-rtti
+# 	-mno-red-zone: Disable red zone on the stack (128 bytes under current RSP).
+# 	This is because the kernel does not switch stacks on interrupts.
+CPPFLAGS=-ffreestanding -static -nostdlib -fno-exceptions -fno-rtti -mno-red-zone -std=c++17
 
 SRC_DIR=./
 SOURCE_FILES:=$(shell find $(SRC_DIR) -type f -name "*.cpp")
-OBJ_FILES:=$(SOURCE_FILES:.cpp=.o)
+ASM_FILES:=$(shell find $(SRC_DIR) -type f -name "*.S")
+OBJ_FILES:=$(SOURCE_FILES:.cpp=.o) $(ASM_FILES:.S=.o)
 
 # Final executable name.
 FILENAME=Krayte
@@ -23,6 +26,8 @@ $(FILENAME): $(OBJ_FILES)
 	$(CC) -o $@ $(CPPFLAGS) $^
 
 %.o: %.cpp
+	$(CC) -c -o $@ $(CPPFLAGS) $<
+%.o: %.S
 	$(CC) -c -o $@ $(CPPFLAGS) $<
 
 .PHONY: clean
