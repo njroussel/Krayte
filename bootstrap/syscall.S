@@ -43,6 +43,7 @@ SYSCALL_TABLE:
 .quad   0x0
 .quad   do_get_tsc_freq
 .quad   do_log_serial
+.quad   do_sbrk
 SYSCALL_TABLE_END:
 
 // =============================================================================
@@ -165,6 +166,63 @@ ASM_FUNC_DEF64(do_log_serial):
     test    al, al
     jnz     ._do_log_serial_loop
 
+    pop     rbx
+    leave
+    ret
+
+// =============================================================================
+// Increment or decrement the program break of the current process.
+// @param (RDI): Increment in bytes. This can be negative to de-allocate heap
+// memory. A value of 0 will return the current program break.
+// @return (RAX): The new value of the program break.
+// Note: The actual size being added or removed to/from the program break might
+// be different than the argument passed for alignment purposes.
+// =============================================================================
+ASM_FUNC_DEF64(do_sbrk):
+    push    rbp
+    mov     rbp, rsp
+    push    rbx
+
+    cmp     rdi, 0x0
+    jl      ._do_sbrk_dealloc
+._do_sbrk_alloc:
+    // Allocation is the hard case since we need to allocate physical RAM and
+    // map it to virtual address space.
+    // To make things easier, we are allocating by multiple of PAGE_SIZE.
+    // RDX = Number of pages to allocate.
+    mov     rdx, rdi
+    shr     rdx, 12
+    test    rdi, (PAGE_SIZE - 1)
+    setnz   al
+    movzx   rax, al
+    add     rdx, rax
+
+    push    rdx
+    // Allocate virtual memory starting at the current program break.
+    mov     rdi, [PROGRAM_BREAK]
+    mov     rsi, (MAP_USER | MAP_WRITE)
+    // RDX already contains the number of pages to allocate.
+    call    alloc_virt
+    pop     rdx
+
+    // Compute the new program break.
+    shl     rdx, 12
+    add     [PROGRAM_BREAK], rdx
+    mov     rax, [PROGRAM_BREAK]
+    jmp     ._do_sbrk_end
+._do_sbrk_dealloc:
+    // Heap de-allocation is not yet implemented. For now we simply do nothing.
+    mov     rax, [PROGRAM_BREAK]
+._do_sbrk_end:
+    // RAX must be set to return value before jumping to here.
+    // Make sure the new PROGRAM_BREAK is page aligned.
+    test    QWORD PTR [PROGRAM_BREAK], (PAGE_SIZE - 1)
+    jz      0f
+    PANIC64("do_sbrk: New program break is not page aligned")
+0:
+    push    rax
+    DEBUG64("do_sbrk: New program break @ %q\n")
+    pop     rax
     pop     rbx
     leave
     ret
