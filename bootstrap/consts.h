@@ -261,4 +261,6 @@
 #define SYSNR_GET_TSC_FREQ  0x2
 // Syscall to print a NUL-terminated string in the serial console.
 #define SYSNR_LOG_SERIAL    0x3
+// Syscall to alloc/dealloc heap memory.
+#define SYSNR_SBRK          0x4
 // ============================================================================= 
