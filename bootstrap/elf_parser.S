@@ -107,7 +107,7 @@ ASM_FUNC_DEF64(check_elf):
 .set P_FILESZ, 0x20
 // Size of the segment in virtual memory. If this is bigger than P_FILESZ then
 // any additional bytes after the initialized content should be 0.
-.set P_MEMSZ, 0x20
+.set P_MEMSZ, 0x28
 // Size of a Program Header Table entry in bytes.
 .set PHENTSIZE, 0x38
 
@@ -190,7 +190,7 @@ copy:
     xor     al, al
     mov     rcx, [rbx + P_MEMSZ]
     sub     rcx, [rbx + P_FILESZ]
-    rep     movsb
+    rep     stosb
     jmp     .process_done
 
 .memsz_zero:
