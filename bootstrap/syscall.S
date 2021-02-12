@@ -184,7 +184,7 @@ ASM_FUNC_DEF64(do_sbrk):
     push    rbx
 
     cmp     rdi, 0x0
-    jl      ._do_sbrk_dealloc
+    jle     ._do_sbrk_dealloc
 ._do_sbrk_alloc:
     // Allocation is the hard case since we need to allocate physical RAM and
     // map it to virtual address space.
