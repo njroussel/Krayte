@@ -56,5 +56,6 @@ include_directories(
 add_executable(Krayte
     # Source files
     src/kr8md_test.cpp
+    src/runtime.cpp
     src/asm.S
 )

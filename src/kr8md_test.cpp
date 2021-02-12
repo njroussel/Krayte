@@ -145,27 +145,6 @@ void mandelbrot_loop_pak(uint *dst, int width = 1080, int height = 720,
     }
 }
 
-template<typename T, typename L>
-void transform(T const * start, T const * end, T* out, L const lambda) {
-    while (start != end) {
-        *out = lambda(*start);
-        ++start;
-        ++out;
-    }
-}
-
-// We do not have dynamic allocation yet. Hence put all arrays in the .BSS.
-static size_t const n = 8000;
-static float vec_a[n];
-static float vec_b[n];
-static float vec_c[n];
-static float pvec_c[n];
-static size_t const width = 1920;
-static size_t const height = 1080;
-static size_t const size = width * height;
-static uint out_mandel[size];
-static uint pout_mandel[size];
-
 int main(void)
 {
     auto const startMain = kr8::Chrono::now();
@@ -177,12 +156,24 @@ int main(void)
         return (float)duration;
     };
 
+    size_t const n = 800000;
+    float * const vec_a = new float[n];
+    float * const vec_b = new float[n];
+    float * const vec_c = new float[n];
+    float * const pvec_c = new float[n];
+
     std::transform(&vec_a[0], &vec_a[n], &vec_a[0], sample_one);
     std::transform(&vec_b[0], &vec_b[n], &vec_b[0], sample_one);
 
     auto loop_duration_normal = measure_runtime([&] { loop_normal(n, vec_a, vec_b, vec_c); });
     auto loop_duration_pak = measure_runtime([&] { loop_paked(n, vec_a, vec_b, pvec_c); });
     bool loop_correct = std::equal(&vec_c[0], &vec_c[n], &pvec_c[0]);
+
+    size_t const width = 1920;
+    size_t const height = 1080;
+    size_t const size = width * height;
+    uint * const out_mandel = new uint[size];
+    uint * const pout_mandel = new uint[size];
 
     auto mandelbrot_duration_normal = measure_runtime([&] { mandelbrot_loop_normal(out_mandel, width, height); });
     auto mandelbrot_duration_pak = measure_runtime([&] { mandelbrot_loop_pak(pout_mandel, width, height); });
@@ -204,6 +195,13 @@ int main(void)
     kr8::sout << "Duration pak: " << mandelbrot_duration_pak << kr8::endl;
     kr8::sout << "Correctness: " << mandelbrot_correct << kr8::endl;
     kr8::sout << kr8::endl;
+
+    delete[] vec_a;
+    delete[] vec_b;
+    delete[] vec_c;
+    delete[] pvec_c;
+    delete[] out_mandel;
+    delete[] pout_mandel;
 
     return 0;
 }
