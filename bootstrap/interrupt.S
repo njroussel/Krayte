@@ -229,6 +229,12 @@ ASM_FUNC_DEF64(init_interrupt):
     push    rbp
     mov     rbp, rsp
 
+    // Disable the legacy Programmable Interrupt Controller (PIC). Having PIC
+    // and APIC at the same time is just asking for trouble.
+    mov     al, 0xff
+    out     0xa1, al
+    out     0x21, al
+
     // Allocate IDT and interrupt handlers.
     call    _create_idt
 

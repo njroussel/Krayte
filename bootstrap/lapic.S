@@ -26,12 +26,6 @@ ASM_FUNC_DEF64(init_lapic):
     push    rbp
     mov     rbp, rsp
 
-    // Disable the legacy Programmable Interrupt Controller (PIC). Having PIC
-    // and APIC at the same time is just asking for trouble.
-    mov     al, 0xff
-    out     0xa1, al
-    out     0x21, al
-
     // Map the LAPIC to virtual memory, use ID mapping to avoid confusion.
     mov     rdi, [LAPIC_ADDR]
     mov     rsi, rdi
@@ -40,9 +34,10 @@ ASM_FUNC_DEF64(init_lapic):
 
     // Initialize the divide configuration register to use 1 as divisor. This
     // MUST NEVER CHANGE, since this is the value that we will calibrate.
-    mov     eax, DWORD PTR [rbx + LAPIC_REG_DIV_CONF]
+    mov     rcx, [LAPIC_ADDR]
+    mov     eax, DWORD PTR [rcx + LAPIC_REG_DIV_CONF]
     or      eax, (1 << 3) | 3
-    mov     DWORD PTR [rbx + LAPIC_REG_DIV_CONF], eax
+    mov     DWORD PTR [rcx + LAPIC_REG_DIV_CONF], eax
 
     // Calibrate the LAPIC timer.
     call    _calibrate_lapic_timer

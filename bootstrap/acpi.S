@@ -138,8 +138,7 @@ ASM_FUNC_DEF64(_acpi_validate_checksum):
     ret
 
 // =============================================================================
-// Check that the RSDP is supported, that is its revision is ACPI v1 and its
-// checksum is valid.
+// Check that the RSDP checksum is valid.
 // @param (RDI): Pointer to the RSDP.
 // @return (RAX): 1 if the RSDP is valid, 0 otherwise.
 // =============================================================================
@@ -147,20 +146,28 @@ ASM_FUNC_DEF64(_acpi_check_rsdp):
     push    rbp
     mov     rbp, rsp
 
-    // First check that the revision of the RSDP is 0, that is ACPI v1. For now
-    // we only support ACPI v1, which is what qemu implements. Support to ACPI
-    // v2 can easily be added later (and will most likely be required for read
-    // hardware).
-    cmp     BYTE PTR [rdi + ACPI_RSDP_REVISION_OFF], 0x0
-    je      0f
-    INFO64("_acpi_check_rsdp: Unsupported ACPI version!\n")
-    xor     rax, rax
-    leave
-    ret
-0:
-    mov     rsi, ACPI_RSDP_SIZE
+    // Validate the checksum on the v1 part of the RSDP.
+    push    rdi
+    mov     rsi, ACPI_RSDP_V1_SIZE
     // RAX == Checksum is valid.
     call    _acpi_validate_checksum
+    pop     rdi
+
+    test    rax, rax
+    jnz     0f
+    // Invalid checksum.
+    ret
+    leave
+0:
+
+    cmp     BYTE PTR [rdi + ACPI_RSDP_REVISION_OFF], 0x1
+    jne     0f
+    // For ACPI v2 we need to validate the checksum for the extended fields as
+    // well.
+    add     rdi, ACPI_RSDP_V1_SIZE
+    mov     rsi, ACPI_RSDP_V2_SIZE - ACPI_RSDP_V1_SIZE
+    call    _acpi_validate_checksum
+0:
     leave
     ret
 
@@ -508,19 +515,37 @@ ASM_FUNC_DEF64(_acpi_parse_sdt):
 // =============================================================================
 // Parse the RSDT and all SDTs that it refers to.
 // @param (RDI): Pointer to RSDT.
+// @param (RSI): ACPI revision. 0 Means ACPI v1 and therefore the RSDT is
+// treated as 32-bit. A value > 0 indicates newer revision and that the pointer points
+// to an XSDT.
 // =============================================================================
 ASM_FUNC_DEF64(_acpi_parse_rsdt):
     push    rbp
     mov     rbp, rsp
     push    rbx
+    push    r12
+
     // The RSDT (as of ACPI v1) is composed of the SDT header followed by an
     // array of 32-bit pointer (physical addresses) of the other SDTs. This
     // array contains N = (rsdt.length - sizeof(sdt header)) / 4 entries.
+    // The XSDT (equivalent for ACPI v2) is exactly the same except the size of
+    // the pointer in the array (64-bits instead of 32-bit) and therefore:
+    // N = (xsdt.length - sizeof(sdt header)) / 8 entries.
+    // R12 = Pointer size = 4 for ACPI v1 or 8 for ACPI v2.
+    mov     r12, rsi
+    cmp     r12, 0x0
+    setnz   r12b
+    shl     r12, 2
+    add     r12, 4
 
     // RCX = N = number of entries in array.
     mov     ecx, DWORD PTR [rdi + ACPI_SDT_HDR_LENGTH_OFF]
     sub     rcx, ACPI_SDT_HDR_SIZE
     shr     rcx, 2
+    cmp     r12, 8
+    jne     0f
+    shr     rcx, 1
+0:
 
     push    rdi
     push    rcx
@@ -535,16 +560,26 @@ ASM_FUNC_DEF64(_acpi_parse_rsdt):
 ._acpi_parse_rsdt_loop:
     // Save iteration count.
     push    rcx
+    DEBUG64("RCX = %q\n")
 
     // Parse SDT.
+    cmp     r12, 8
+    je      0f
+    // ACPI v1, 32-bit pointer.
     mov     edi, [rbx]
+    jmp     1f
+0:
+    // ACPI v2, 64-bit pointer.
+    mov     rdi, [rbx]
+1:
     call    _acpi_parse_sdt 
 
     // Advance iterator and go to next iteration.
-    add     rbx, 4
+    add     rbx, r12
     pop     rcx
     loop    ._acpi_parse_rsdt_loop
 
+    pop     r12
     pop     rbx
     leave
     ret
@@ -564,8 +599,18 @@ ASM_FUNC_DEF64(init_acpi):
     // RAX = Address of RSDP.
     call    _acpi_find_rsdp
 
-    // RBX = Address of RSDT.
+    // RBX = Address of RSDT or XSDT if available.
+    cmp     BYTE PTR [rax + ACPI_RSDP_REVISION_OFF], 0x0
+    je      0f
+    // ACPI v2. Use XSDT instead.
+    mov     ebx, DWORD PTR [rax + ACPI_RSDP_XSDT_ADDR_OFF]
+    jmp     1f
+0:
+    // ACPI v1. Use RSDT.
     mov     ebx, DWORD PTR [rax + ACPI_RSDP_RSDT_ADDR_OFF]
+1:
+
+    push    rax
 
     // Map the RSDT to virtual memory.
     mov     rdi, rbx
@@ -575,8 +620,10 @@ ASM_FUNC_DEF64(init_acpi):
     DEBUG64("RSDT @ %q\n")
     add     esp, 8
 
+    pop     rax
     // Parse the RSDT and all SDTs pointed by it.
     mov     rdi, rbx
+    movzx   rsi, BYTE PTR [rax + ACPI_RSDP_REVISION_OFF]
     call    _acpi_parse_rsdt
 
     // Unmap the RSDT.
