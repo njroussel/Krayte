@@ -26,12 +26,6 @@ ASM_FUNC_DEF64(init_lapic):
     push    rbp
     mov     rbp, rsp
 
-    // Disable the legacy Programmable Interrupt Controller (PIC). Having PIC
-    // and APIC at the same time is just asking for trouble.
-    mov     al, 0xff
-    out     0xa1, al
-    out     0x21, al
-
     // Map the LAPIC to virtual memory, use ID mapping to avoid confusion.
     mov     rdi, [LAPIC_ADDR]
     mov     rsi, rdi
