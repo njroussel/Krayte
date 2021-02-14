@@ -137,8 +137,18 @@
 #define ACPI_RSDP_REVISION_OFF  0x0F
 // (DWORD) Linear Address of the RSDT.
 #define ACPI_RSDP_RSDT_ADDR_OFF 0x10
+// Offsets below this line are only valid for ACPI v2.
+// (DWORD) The length of the RDSP.
+#define ACPI_RSDP_LENGTH_OFF        0x14
+// (QWORD) The address of the XSDT.
+#define ACPI_RSDP_XSDT_ADDR_OFF     0x18
+// (BYTE) Checksum of the added data with ACPI v2.
+#define ACPI_RSDP_EXT_CHECKSUM_OFF  0x20
+
 // Size of a RSDP for ACPI v1.
-#define ACPI_RSDP_SIZE  0x14
+#define ACPI_RSDP_V1_SIZE  0x14
+// Size of a RSDP for ACPI v2.
+#define ACPI_RSDP_V2_SIZE  0x24
 
 // System Descriptor Table (SDT) header offsets:
 // (4 BYTES) Signature of the SDT.
