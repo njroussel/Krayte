@@ -1,0 +1,3 @@
+[submodule "ext/kr8md"]
+	path = ext/kr8md
+	url = git@github.com:njroussel/Kr8md.git
