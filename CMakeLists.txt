@@ -48,10 +48,12 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DKRAYTE_ALLOW_STD")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
-include_directories(
+add_subdirectory(ext)
+
+#include_directories(
     # Include files
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+#    ${CMAKE_CURRENT_SOURCE_DIR}/include
+#)
 
 add_executable(Krayte
     # Source files
@@ -59,3 +61,10 @@ add_executable(Krayte
     src/runtime.cpp
     src/asm.S
 )
+
+target_include_directories(Krayte PRIVATE
+    # Kiryu include files
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    # Kr8md SIMD library
+    ${KR8MD_INCLUDE_DIR}
+    )
